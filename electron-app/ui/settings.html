@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>VibeProxy</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg-primary: #1c1c1e;
+      --bg-secondary: #2c2c2e;
+      --bg-tertiary: #3a3a3c;
+      --text-primary: #ffffff;
+      --text-secondary: #8e8e93;
+      --accent: #0a84ff;
+      --green: #30d158;
+      --red: #ff453a;
+      --orange: #ff9f0a;
+      --border: #38383a;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 13px;
+      -webkit-app-region: drag;
+      padding-top: 28px;
+    }
+    .container {
+      -webkit-app-region: no-drag;
+      padding: 0 16px 16px;
+      max-height: calc(100vh - 28px);
+      overflow-y: auto;
+    }
+    
+    /* Sections */
+    .section {
+      background: var(--bg-secondary);
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+    .section-header {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 16px 16px 8px;
+    }
+    .section-content { padding: 0 16px 12px; }
+    
+    /* Rows */
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 11px 0;
+      border-bottom: 0.5px solid var(--border);
+    }
+    .row:last-child { border-bottom: none; }
+    .row-label { color: var(--text-primary); }
+    
+    /* Status dot */
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      margin-right: 6px;
+    }
+    .dot.green { background: var(--green); }
+    .dot.red { background: var(--red); }
+    .dot.orange { background: var(--orange); }
+    
+    /* Buttons */
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    button:hover { opacity: 0.9; }
+    button:active { opacity: 0.8; }
+    button:disabled { background: var(--bg-tertiary); opacity: 0.5; cursor: not-allowed; }
+    button.secondary { background: var(--bg-tertiary); }
+    button.plain { background: transparent; color: var(--text-primary); padding: 5px 8px; }
+    button.danger { background: transparent; color: var(--red); }
+    
+    /* Toggle */
+    .toggle {
+      position: relative;
+      width: 40px; height: 24px;
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .toggle.on { background: var(--green); }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      width: 20px; height: 20px;
+      background: white;
+      border-radius: 50%;
+      top: 2px; left: 2px;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .toggle.on::after { transform: translateX(16px); }
+    
+    /* Service rows */
+    .service-row { padding: 12px 0; border-bottom: 0.5px solid var(--border); }
+    .service-row:last-child { border-bottom: none; }
+    .service-header { display: flex; align-items: center; gap: 10px; }
+    .service-icon { width: 24px; height: 24px; border-radius: 6px; }
+    .service-icon.disabled { opacity: 0.4; }
+    .service-name { font-weight: 500; flex: 1; }
+    .service-name.disabled { color: var(--text-secondary); }
+    .badge { font-size: 11px; color: var(--orange); margin-left: 4px; }
+    
+    /* Accounts */
+    .accounts-summary {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 0 0 50px;
+      font-size: 12px; color: var(--green);
+      cursor: pointer;
+      user-select: none;
+    }
+    .accounts-summary .meta { color: var(--text-secondary); }
+    .accounts-summary .chevron { color: var(--text-secondary); font-size: 10px; transition: transform 0.2s; }
+    .accounts-summary .chevron.expanded { transform: rotate(90deg); }
+    .accounts-list { padding: 8px 0 0 50px; display: none; }
+    .accounts-list.show { display: block; }
+    .account-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 6px 0; font-size: 12px;
+    }
+    .account-email { color: var(--text-secondary); flex: 1; }
+    .account-email.expired { color: var(--orange); }
+    .no-accounts { padding: 6px 0 0 50px; font-size: 12px; color: var(--text-secondary); }
+    
+    /* Spinner */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid var(--bg-tertiary);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    /* Modal */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+      -webkit-app-region: no-drag;
+    }
+    .modal {
+      background: var(--bg-secondary);
+      border-radius: 14px;
+      padding: 20px;
+      min-width: 300px; max-width: 380px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    }
+    .modal h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; text-align: center; }
+    .modal p { font-size: 12px; color: var(--text-secondary); margin-bottom: 16px; text-align: center; }
+    .modal input {
+      width: 100%; padding: 10px 12px;
+      border: none; border-radius: 8px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 13px; margin-bottom: 16px;
+    }
+    .modal input:focus { outline: 2px solid var(--accent); }
+    .modal-buttons { display: flex; justify-content: center; gap: 10px; }
+    .modal-buttons button { min-width: 80px; padding: 8px 16px; }
+    
+    /* Alert */
+    .alert { text-align: center; }
+    .alert p { white-space: pre-wrap; line-height: 1.5; color: var(--text-primary); }
+    
+    /* Footer */
+    .footer {
+      text-align: center; padding: 16px;
+      font-size: 11px; color: var(--text-secondary);
+    }
+    .footer a { color: var(--text-secondary); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+    
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Server Status -->
+    <div class="section">
+      <div class="section-content">
+        <div class="row">
+          <span class="row-label">Server status</span>
+          <button class="plain" id="serverBtn" onclick="toggleServer()">
+            <span class="dot" id="serverDot"></span>
+            <span id="serverStatus">Stopped</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Settings -->
+    <div class="section">
+      <div class="section-content">
+        <div class="row">
+          <span class="row-label">Launch at login</span>
+          <div class="toggle" id="launchToggle" onclick="toggleLaunchAtLogin()"></div>
+        </div>
+        <div class="row">
+          <span class="row-label">Auth files</span>
+          <button class="secondary" onclick="vp.openAuthFolder()">Open Folder</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Services -->
+    <div class="section">
+      <div class="section-header">Services</div>
+      <div class="section-content" id="services"></div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      <p>VibeProxy v<span id="version"></span> was made possible thanks to 
+        <a href="https://github.com/router-for-me/CLIProxyAPIPlus" target="_blank">CLIProxyAPIPlus</a> | MIT License</p>
+      <p style="margin-top:4px">© 2026 <a href="https://automaze.io" target="_blank">Automaze, Ltd.</a> All rights reserved.</p>
+      <p style="margin-top:8px"><a href="https://github.com/automazeio/vibeproxy/issues" target="_blank">Report an issue</a></p>
+    </div>
+  </div>
+  
+  <!-- Input Modal -->
+  <div id="inputModal" class="modal-overlay hidden">
+    <div class="modal">
+      <h3 id="modalTitle"></h3>
+      <p id="modalDesc"></p>
+      <input type="text" id="modalInput" placeholder="">
+      <div class="modal-buttons">
+        <button class="secondary" onclick="closeModal()">Cancel</button>
+        <button id="modalSubmitBtn" onclick="submitModal()">Continue</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Alert Modal -->
+  <div id="alertModal" class="modal-overlay hidden">
+    <div class="modal alert">
+      <h3 id="alertTitle"></h3>
+      <p id="alertMsg"></p>
+      <div class="modal-buttons">
+        <button onclick="closeAlert()">OK</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Confirm Modal -->
+  <div id="confirmModal" class="modal-overlay hidden">
+    <div class="modal alert">
+      <h3 id="confirmTitle"></h3>
+      <p id="confirmMsg"></p>
+      <div class="modal-buttons">
+        <button class="secondary" onclick="doCancelConfirm()">Cancel</button>
+        <button class="danger" id="confirmBtn" onclick="doConfirm()">Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { shell } = require('electron');
+    let vp;
+    try {
+      vp = require('@electron/remote').getGlobal('vibeProxy');
+    } catch (e) {
+      vp = require('electron').remote.getGlobal('vibeProxy');
+    }
+    
+    // Services config
+    const SERVICES = [
+      { type: 'antigravity', name: 'Antigravity', icon: 'icon-antigravity.png', cmd: '-antigravity-login',
+        help: 'OAuth-based access to various AI models including Gemini and Claude.' },
+      { type: 'claude', name: 'Claude Code', icon: 'icon-claude.png', cmd: '-claude-login' },
+      { type: 'codex', name: 'Codex', icon: 'icon-codex.png', cmd: '-codex-login' },
+      { type: 'gemini', name: 'Gemini', icon: 'icon-gemini.png', cmd: '-login',
+        help: '⚠️ If you have multiple projects, authentication will use your default project.' },
+      { type: 'github-copilot', name: 'GitHub Copilot', icon: 'icon-copilot.png', cmd: '-github-copilot-login',
+        help: 'Access to Claude, GPT, Gemini and other models via your Copilot subscription.' },
+      { type: 'kiro', name: 'Kiro (AWS)', icon: 'icon-kiro.png', webAuth: true,
+        help: 'AWS CodeWhisperer/Kiro - supports Google OAuth, AWS Builder ID, and token import from Kiro IDE.' },
+      { type: 'qwen', name: 'Qwen', icon: 'icon-qwen.png', cmd: '-qwen-login', needsEmail: true },
+      { type: 'zai', name: 'Z.AI GLM', icon: 'icon-zai.png', needsApiKey: true,
+        help: 'Access to GLM-4.7 and other models via API key.' }
+    ];
+    
+    let authenticating = null;
+    let expanded = new Set();
+    let modalCallback = null;
+    let confirmCallback = null;
+    let confirmCancelCallback = null;
+    
+    // Initialize
+    document.getElementById('version').textContent = vp.getVersion();
+    updateUI();
+    updateLaunchAtLogin();
+    setInterval(updateUI, 3000);
+    
+    // Watch auth directory
+    const fs = require('fs');
+    const path = require('path');
+    const os = require('os');
+    const authDir = path.join(os.homedir(), '.cli-proxy-api');
+    try {
+      if (!fs.existsSync(authDir)) fs.mkdirSync(authDir, { recursive: true });
+      fs.watch(authDir, { persistent: false }, () => setTimeout(renderServices, 500));
+    } catch (e) {}
+
+    function updateUI() {
+      updateServerStatus();
+      renderServices();
+    }
+    
+    function updateLaunchAtLogin() {
+      const enabled = vp.getLaunchAtLogin();
+      const toggle = document.getElementById('launchToggle');
+      if (enabled) {
+        toggle.classList.add('on');
+      } else {
+        toggle.classList.remove('on');
+      }
+    }
+    
+    function toggleLaunchAtLogin() {
+      const current = vp.getLaunchAtLogin();
+      vp.setLaunchAtLogin(!current);
+      updateLaunchAtLogin();
+    }
+    
+    function updateServerStatus() {
+      const running = vp.isServerRunning();
+      document.getElementById('serverDot').className = 'dot ' + (running ? 'green' : 'red');
+      document.getElementById('serverStatus').textContent = running ? 'Running' : 'Stopped';
+    }
+    
+    async function toggleServer() {
+      if (vp.isServerRunning()) {
+        await vp.stopServer();
+      } else {
+        await vp.startServer();
+      }
+      setTimeout(updateServerStatus, 500);
+    }
+    
+    function renderServices() {
+      const accounts = vp.getAuthAccounts();
+      const container = document.getElementById('services');
+      container.innerHTML = '';
+      
+      for (const svc of SERVICES) {
+        const svcAccounts = accounts.filter(a => a.type === svc.type);
+        const enabled = vp.isProviderEnabled(svc.type);
+        const isAuth = authenticating === svc.type;
+        const isExp = expanded.has(svc.type);
+        
+        // Auto-expand if has expired accounts
+        if (svcAccounts.some(a => a.expired) && !expanded.has(svc.type)) {
+          expanded.add(svc.type);
+        }
+        
+        let html = `<div class="service-row">
+          <div class="service-header">
+            <div class="toggle ${enabled ? 'on' : ''}" onclick="toggleProvider('${svc.type}')"></div>
+            <img class="service-icon ${enabled ? '' : 'disabled'}" src="../assets/${svc.icon}" onerror="this.style.display='none'">
+            <span class="service-name ${enabled ? '' : 'disabled'}">${svc.name}</span>
+            ${!enabled ? '<span class="badge">(disabled)</span>' : ''}
+            ${isAuth ? '<div class="spinner"></div>' : (enabled ? `<button onclick="connect('${svc.type}')">Add Account</button>` : '')}
+          </div>`;
+        
+        if (enabled) {
+          if (svcAccounts.length > 0) {
+            const countText = `${svcAccounts.length} connected account${svcAccounts.length > 1 ? 's' : ''}`;
+            const meta = svcAccounts.length > 1 ? '<span class="meta">• Round-robin w/ auto-failover</span>' : '';
+            html += `
+              <div class="accounts-summary" onclick="toggleExpand('${svc.type}')">
+                <span>${countText}</span>
+                ${meta}
+                <span class="chevron ${isExp ? 'expanded' : ''}">▶</span>
+              </div>
+              <div class="accounts-list ${isExp ? 'show' : ''}">`;
+            
+            for (const acc of svcAccounts) {
+              const expiredClass = acc.expired ? 'expired' : '';
+              const expiredText = acc.expired ? ' (expired)' : '';
+              const safeId = acc.id.replace(/['"]/g, '');
+              html += `
+                <div class="account-item">
+                  <span class="dot ${acc.expired ? 'orange' : 'green'}"></span>
+                  <span class="account-email ${expiredClass}">${escapeHtml(acc.email)}${expiredText}</span>
+                  <button class="danger" onclick="removeAccountById('${safeId}')">Remove</button>
+                </div>`;
+            }
+            html += '</div>';
+          } else {
+            html += '<div class="no-accounts">No connected accounts</div>';
+          }
+        }
+        
+        html += '</div>';
+        container.innerHTML += html;
+      }
+    }
+    
+    function toggleProvider(type) {
+      const current = vp.isProviderEnabled(type);
+      vp.setProviderEnabled(type, !current);
+      renderServices();
+    }
+    
+    function toggleExpand(type) {
+      if (expanded.has(type)) {
+        expanded.delete(type);
+      } else {
+        expanded.add(type);
+      }
+      renderServices();
+    }
+    
+    async function connect(type) {
+      const svc = SERVICES.find(s => s.type === type);
+      
+      // Kiro uses web-based auth UI from CLIProxyAPIPlus management center
+      if (svc.webAuth) {
+        if (!vp.isServerRunning()) {
+          showAlert('Server Not Running', 'Please start the server first to authenticate with Kiro.');
+          return;
+        }
+        
+        // Check if Kiro IDE token exists
+        const hasKiroToken = vp.checkKiroToken();
+        const accounts = vp.getAuthAccounts();
+        const hasImportedToken = accounts.some(a => a.type === 'kiro');
+        
+        if (hasKiroToken) {
+          // Show choice: Web Auth, Import, or Sync
+          showConfirm(
+            'Kiro Authentication',
+            'Choose authentication method:\n\n• Web Authentication (Google OAuth / AWS Builder ID)\n• Import from Kiro IDE (detected)\n• Sync existing token from IDE',
+            () => {
+              // Web auth
+              shell.openExternal(`http://localhost:${vp.getPort()}/v0/oauth/kiro`);
+              showAlert('Kiro Authentication', '🌐 Browser opened for Kiro authentication.\n\nYou can:\n• Login with Google OAuth\n• Login with AWS Builder ID\n\nThe app will automatically detect your credentials.');
+            },
+            () => {
+              if (hasImportedToken) {
+                // Sync existing token
+                const result = vp.syncKiroTokenFromIDE();
+                if (result.success) {
+                  showAlert('Success', `✓ Synced ${result.updated} Kiro token(s) from IDE!\n\nTokens have been updated with the latest credentials.`);
+                  renderServices();
+                } else {
+                  showAlert('Sync Failed', result.error || 'Failed to sync Kiro token.');
+                }
+              } else {
+                // Import new token
+                const result = vp.importKiroToken();
+                if (result.success) {
+                  showAlert('Success', '✓ Kiro token imported from Kiro IDE successfully!');
+                  renderServices();
+                } else {
+                  showAlert('Import Failed', result.error || 'Failed to import Kiro token.');
+                }
+              }
+            },
+            'Web Auth',
+            hasImportedToken ? 'Sync from IDE' : 'Import from IDE'
+          );
+        } else {
+          // No Kiro token found, only show web auth
+          shell.openExternal(`http://localhost:${vp.getPort()}/v0/oauth/kiro`);
+          showAlert('Kiro Authentication', '🌐 Browser opened for Kiro authentication.\n\nYou can:\n• Login with Google OAuth\n• Login with AWS Builder ID\n\nThe app will automatically detect your credentials.');
+        }
+        return;
+      }
+      
+      if (svc.needsEmail) {
+        showModal('Qwen Account Email', 'Enter your Qwen account email address', 'your.email@example.com', 'email', 'Continue', async (email) => {
+          if (email) await doAuth(type, svc.cmd, email);
+        });
+        return;
+      }
+      
+      if (svc.needsApiKey) {
+        showModal('Z.AI API Key', 'Enter your Z.AI API key from z.ai/manage-apikey/apikey-list', '', 'password', 'Add Key', (key) => {
+          if (key) {
+            vp.saveZaiApiKey(key);
+            showAlert('Success', '✓ Z.AI API key added successfully.\n\nYou can now use GLM models through the proxy.');
+            renderServices();
+          }
+        });
+        return;
+      }
+      
+      await doAuth(type, svc.cmd);
+    }
+    
+    async function doAuth(type, cmd, email = null) {
+      authenticating = type;
+      renderServices();
+      
+      try {
+        const result = await vp.runAuthCommand(cmd, email);
+        authenticating = null;
+        renderServices();
+        
+        if (result.success) {
+          showAlert('Authentication Started', getSuccessMsg(type, result.output));
+        } else {
+          showAlert('Authentication Failed', `Please check if the browser opened and try again.\n\nDetails: ${result.output || 'No output'}`);
+        }
+      } catch (e) {
+        authenticating = null;
+        renderServices();
+        showAlert('Error', e.message);
+      }
+    }
+    
+    function getSuccessMsg(type, output) {
+      if (type === 'github-copilot' && output.includes('Code copied')) {
+        return output;
+      }
+      const msgs = {
+        'antigravity': '🌐 Browser opened for Antigravity authentication.\n\nPlease complete the login in your browser.\n\nThe app will automatically detect your credentials.',
+        'claude': '🌐 Browser opened for Claude Code authentication.\n\nPlease complete the login in your browser.\n\nThe app will automatically detect your credentials.',
+        'codex': '🌐 Browser opened for Codex authentication.\n\nPlease complete the login in your browser.\n\nThe app will automatically detect your credentials.',
+        'gemini': '🌐 Browser opened for Gemini authentication.\n\nPlease complete the login in your browser.\n\n⚠️ Note: If you have multiple projects, the default project will be used.',
+        'github-copilot': '🌐 GitHub Copilot authentication started!\n\nPlease visit github.com/login/device and enter the code shown.\n\nThe app will automatically detect your credentials.',
+        'qwen': '🌐 Browser opened for Qwen authentication.\n\nPlease complete the login in your browser.'
+      };
+      return msgs[type] || 'Browser opened for authentication.';
+    }
+    
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    
+    function removeAccountById(id) {
+      const accounts = vp.getAuthAccounts();
+      const acc = accounts.find(a => a.id === id);
+      if (!acc) return;
+      
+      const svc = SERVICES.find(s => s.type === acc.type);
+      const serviceName = svc ? svc.name : acc.type;
+      
+      showConfirm('Remove Account', `Are you sure you want to remove ${acc.email} from ${serviceName}?`, () => {
+        const wasRunning = vp.isServerRunning();
+        
+        if (vp.deleteAccount(acc.path)) {
+          showAlert('Removed', `✓ Removed ${acc.email}`);
+          
+          if (wasRunning) {
+            vp.stopServer().then(() => {
+              setTimeout(() => vp.startServer(), 300);
+            });
+          }
+        } else {
+          showAlert('Error', 'Failed to remove account');
+        }
+        renderServices();
+      }, null, 'Remove', 'Cancel');
+    }
+    
+    function removeAccount(filePath, email, serviceName) {
+      showConfirm('Remove Account', `Are you sure you want to remove ${email} from ${serviceName}?`, () => {
+        const wasRunning = vp.isServerRunning();
+        
+        if (vp.deleteAccount(filePath)) {
+          showAlert('Removed', `✓ Removed ${email}`);
+          
+          // Restart server if was running (like Swift version)
+          if (wasRunning) {
+            vp.stopServer().then(() => {
+              setTimeout(() => vp.startServer(), 300);
+            });
+          }
+        } else {
+          showAlert('Error', 'Failed to remove account');
+        }
+        renderServices();
+      });
+    }
+    
+    // Modal functions
+    function showModal(title, desc, placeholder, inputType, btnText, callback) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalDesc').textContent = desc;
+      document.getElementById('modalInput').placeholder = placeholder;
+      document.getElementById('modalInput').type = inputType;
+      document.getElementById('modalInput').value = '';
+      document.getElementById('modalSubmitBtn').textContent = btnText;
+      document.getElementById('inputModal').classList.remove('hidden');
+      document.getElementById('modalInput').focus();
+      modalCallback = callback;
+    }
+    
+    function closeModal() {
+      document.getElementById('inputModal').classList.add('hidden');
+      modalCallback = null;
+    }
+    
+    function submitModal() {
+      const val = document.getElementById('modalInput').value;
+      const cb = modalCallback;
+      closeModal();
+      if (cb) cb(val);
+    }
+    
+    function showAlert(title, msg) {
+      document.getElementById('alertTitle').textContent = title;
+      document.getElementById('alertMsg').textContent = msg;
+      document.getElementById('alertModal').classList.remove('hidden');
+    }
+    
+    function closeAlert() {
+      document.getElementById('alertModal').classList.add('hidden');
+    }
+    
+    function showConfirm(title, msg, callback, cancelCallback, confirmText, cancelText) {
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmMsg').textContent = msg;
+      document.getElementById('confirmBtn').textContent = confirmText || 'Remove';
+      if (cancelText) {
+        const cancelBtn = document.querySelector('#confirmModal .secondary');
+        cancelBtn.textContent = cancelText;
+      }
+      document.getElementById('confirmModal').classList.remove('hidden');
+      confirmCallback = callback;
+      confirmCancelCallback = cancelCallback;
+    }
+    
+    function closeConfirm() {
+      document.getElementById('confirmModal').classList.add('hidden');
+      confirmCallback = null;
+      confirmCancelCallback = null;
+      // Reset button text
+      document.getElementById('confirmBtn').textContent = 'Remove';
+      const cancelBtn = document.querySelector('#confirmModal .secondary');
+      cancelBtn.textContent = 'Cancel';
+    }
+    
+    function doConfirm() {
+      const cb = confirmCallback;
+      closeConfirm();
+      if (cb) cb();
+    }
+    
+    function doCancelConfirm() {
+      const cb = confirmCancelCallback;
+      closeConfirm();
+      if (cb) cb();
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        if (!document.getElementById('inputModal').classList.contains('hidden')) submitModal();
+        else if (!document.getElementById('alertModal').classList.contains('hidden')) closeAlert();
+        else if (!document.getElementById('confirmModal').classList.contains('hidden')) doConfirm();
+      }
+      if (e.key === 'Escape') {
+        closeModal();
+        closeAlert();
+        closeConfirm();
+      }
+    });
+    
+    // Open links in browser
+    document.addEventListener('click', (e) => {
+      if (e.target.tagName === 'A' && e.target.href.startsWith('http')) {
+        e.preventDefault();
+        shell.openExternal(e.target.href);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,412 @@
+{
+  "apiConfiguration": {
+    "baseUrl": "http://localhost:8317",
+    "apiKey": "dummy-not-used",
+    "note": "API Key can be any string - VibeProxy does not validate it"
+  },
+  "models": [
+    {
+      "model": "kiro-auto",
+      "id": "custom:Kiro-Auto-0",
+      "index": 0,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Kiro Auto",
+      "description": "Automatically selects the best Kiro model",
+      "noImageSupport": false,
+      "provider": "anthropic",
+      "service": "kiro"
+    },
+    {
+      "model": "kiro-claude-sonnet-4-5",
+      "id": "custom:Kiro-Sonnet-4.5-1",
+      "index": 1,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Kiro Claude Sonnet 4.5",
+      "description": "Most capable Kiro model, balanced performance",
+      "noImageSupport": false,
+      "provider": "anthropic",
+      "service": "kiro"
+    },
+    {
+      "model": "kiro-claude-sonnet-4-5-thinking-32000",
+      "id": "custom:Kiro-Sonnet-4.5-Thinking-High-2",
+      "index": 2,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Kiro Sonnet 4.5 Thinking (High)",
+      "description": "Deep reasoning with 32000 token budget",
+      "noImageSupport": false,
+      "provider": "anthropic",
+      "service": "kiro",
+      "extendedThinking": true,
+      "thinkingBudget": 32000
+    },
+    {
+      "model": "kiro-claude-sonnet-4-5-thinking-10000",
+      "id": "custom:Kiro-Sonnet-4.5-Thinking-Medium-3",
+      "index": 3,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Kiro Sonnet 4.5 Thinking (Medium)",
+      "description": "Balanced reasoning with 10000 token budget",
+      "noImageSupport": false,
+      "provider": "anthropic",
+      "service": "kiro",
+      "extendedThinking": true,
+      "thinkingBudget": 10000
+    },
+    {
+      "model": "kiro-claude-sonnet-4-5-thinking-4000",
+      "id": "custom:Kiro-Sonnet-4.5-Thinking-Low-4",
+      "index": 4,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Kiro Sonnet 4.5 Thinking (Low)",
+      "description": "Quick reasoning with 4000 token budget",
+      "noImageSupport": false,
+      "provider": "anthropic",
+      "service": "kiro",
+      "extendedThinking": true,
+      "thinkingBudget": 4000
+    },
+    {
+      "model": "kiro-claude-sonnet-4-5-agentic",
+      "id": "custom:Kiro-Sonnet-4.5-Agentic-5",
+      "index": 5,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Kiro Sonnet 4.5 Agentic",
+      "description": "Optimized for agent workflows and tool use",
+      "noImageSupport": false,
+      "provider": "anthropic",
+      "service": "kiro"
+    },
+    {
+      "model": "kiro-claude-sonnet-4",
+      "id": "custom:Kiro-Sonnet-4-6",
+      "index": 6,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Kiro Claude Sonnet 4",
+      "description": "Previous generation Sonnet model",
+      "noImageSupport": false,
+      "provider": "anthropic",
+      "service": "kiro"
+    },
+    {
+      "model": "kiro-claude-sonnet-4-agentic",
+      "id": "custom:Kiro-Sonnet-4-Agentic-7",
+      "index": 7,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Kiro Sonnet 4 Agentic",
+      "description": "Sonnet 4 optimized for agent workflows",
+      "noImageSupport": false,
+      "provider": "anthropic",
+      "service": "kiro"
+    },
+    {
+      "model": "kiro-claude-opus-4-5",
+      "id": "custom:Kiro-Opus-4.5-8",
+      "index": 8,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Kiro Claude Opus 4.5",
+      "description": "Most powerful Kiro model for complex tasks",
+      "noImageSupport": false,
+      "provider": "anthropic",
+      "service": "kiro"
+    },
+    {
+      "model": "kiro-claude-opus-4-5-agentic",
+      "id": "custom:Kiro-Opus-4.5-Agentic-9",
+      "index": 9,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Kiro Opus 4.5 Agentic",
+      "description": "Most powerful model for agent workflows",
+      "noImageSupport": false,
+      "provider": "anthropic",
+      "service": "kiro"
+    },
+    {
+      "model": "kiro-claude-haiku-4-5",
+      "id": "custom:Kiro-Haiku-4.5-10",
+      "index": 10,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Kiro Claude Haiku 4.5",
+      "description": "Fastest Kiro model for quick responses",
+      "noImageSupport": false,
+      "provider": "anthropic",
+      "service": "kiro"
+    },
+    {
+      "model": "kiro-claude-haiku-4-5-agentic",
+      "id": "custom:Kiro-Haiku-4.5-Agentic-11",
+      "index": 11,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Kiro Haiku 4.5 Agentic",
+      "description": "Fast model optimized for agent workflows",
+      "noImageSupport": false,
+      "provider": "anthropic",
+      "service": "kiro"
+    },
+    {
+      "model": "gemini-3-pro-preview",
+      "id": "custom:Gemini-3-Pro-12",
+      "index": 12,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Gemini 3 Pro Preview",
+      "description": "Latest Gemini Pro model preview",
+      "noImageSupport": false,
+      "provider": "google",
+      "service": "antigravity"
+    },
+    {
+      "model": "gemini-3-flash-preview",
+      "id": "custom:Gemini-3-Flash-13",
+      "index": 13,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Gemini 3 Flash Preview",
+      "description": "Latest Gemini Flash model preview",
+      "noImageSupport": false,
+      "provider": "google",
+      "service": "antigravity"
+    },
+    {
+      "model": "gemini-2.5-pro",
+      "id": "custom:Gemini-2.5-Pro-14",
+      "index": 14,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Gemini 2.5 Pro",
+      "description": "Powerful Gemini model for complex tasks",
+      "noImageSupport": false,
+      "provider": "google",
+      "service": "gemini"
+    },
+    {
+      "model": "gemini-2.5-flash",
+      "id": "custom:Gemini-2.5-Flash-15",
+      "index": 15,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Gemini 2.5 Flash",
+      "description": "Fast Gemini model for quick responses",
+      "noImageSupport": false,
+      "provider": "google",
+      "service": "gemini"
+    },
+    {
+      "model": "gemini-2.5-flash-lite",
+      "id": "custom:Gemini-2.5-Flash-Lite-16",
+      "index": 16,
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "displayName": "Gemini 2.5 Flash Lite",
+      "description": "Ultra-fast lightweight Gemini model",
+      "noImageSupport": false,
+      "provider": "google",
+      "service": "gemini"
+    }
+  ],
+  "additionalModels": {
+    "note": "These models are available when you enable and authenticate the corresponding services in VibeProxy",
+    "claude": [
+      {
+        "model": "claude-3-5-sonnet-20241022",
+        "displayName": "Claude 3.5 Sonnet",
+        "provider": "anthropic",
+        "service": "claude"
+      },
+      {
+        "model": "claude-3-5-sonnet-20241022-thinking-32000",
+        "displayName": "Claude 3.5 Sonnet Thinking (High)",
+        "provider": "anthropic",
+        "service": "claude",
+        "extendedThinking": true
+      },
+      {
+        "model": "claude-3-5-haiku-20241022",
+        "displayName": "Claude 3.5 Haiku",
+        "provider": "anthropic",
+        "service": "claude"
+      },
+      {
+        "model": "claude-3-opus-20240229",
+        "displayName": "Claude 3 Opus",
+        "provider": "anthropic",
+        "service": "claude"
+      }
+    ],
+    "copilot": [
+      {
+        "model": "gpt-4o",
+        "displayName": "GPT-4o",
+        "provider": "openai",
+        "service": "copilot"
+      },
+      {
+        "model": "gpt-4o-mini",
+        "displayName": "GPT-4o Mini",
+        "provider": "openai",
+        "service": "copilot"
+      },
+      {
+        "model": "o1-preview",
+        "displayName": "O1 Preview",
+        "provider": "openai",
+        "service": "copilot"
+      },
+      {
+        "model": "o1-mini",
+        "displayName": "O1 Mini",
+        "provider": "openai",
+        "service": "copilot"
+      }
+    ],
+    "qwen": [
+      {
+        "model": "qwen-max",
+        "displayName": "Qwen Max",
+        "provider": "openai",
+        "service": "qwen"
+      },
+      {
+        "model": "qwen-plus",
+        "displayName": "Qwen Plus",
+        "provider": "openai",
+        "service": "qwen"
+      },
+      {
+        "model": "qwen-turbo",
+        "displayName": "Qwen Turbo",
+        "provider": "openai",
+        "service": "qwen"
+      }
+    ],
+    "zai": [
+      {
+        "model": "glm-4.7",
+        "displayName": "GLM-4.7",
+        "provider": "openai",
+        "service": "zai"
+      },
+      {
+        "model": "glm-4-plus",
+        "displayName": "GLM-4-Plus",
+        "provider": "openai",
+        "service": "zai"
+      },
+      {
+        "model": "glm-4-air",
+        "displayName": "GLM-4-Air",
+        "provider": "openai",
+        "service": "zai"
+      },
+      {
+        "model": "glm-4-flash",
+        "displayName": "GLM-4-Flash",
+        "provider": "openai",
+        "service": "zai"
+      }
+    ],
+    "antigravity": [
+      {
+        "model": "gemini-claude-sonnet-4-5",
+        "displayName": "Antigravity Claude Sonnet 4.5",
+        "provider": "anthropic",
+        "service": "antigravity"
+      },
+      {
+        "model": "gemini-claude-sonnet-4-5-thinking-32000",
+        "displayName": "Antigravity Sonnet Thinking (High)",
+        "provider": "anthropic",
+        "service": "antigravity",
+        "extendedThinking": true
+      },
+      {
+        "model": "gemini-claude-opus-4-5-thinking-32000",
+        "displayName": "Antigravity Opus Thinking (High)",
+        "provider": "anthropic",
+        "service": "antigravity",
+        "extendedThinking": true
+      },
+      {
+        "model": "gemini-2.5-computer-use-preview-10-2025",
+        "displayName": "Gemini 2.5 Computer Use",
+        "provider": "google",
+        "service": "antigravity"
+      }
+    ],
+    "codex": [
+      {
+        "model": "gpt-4-turbo",
+        "displayName": "GPT-4 Turbo",
+        "provider": "openai",
+        "service": "codex"
+      }
+    ]
+  },
+  "usage": {
+    "cursor": {
+      "format": "Cursor customModels format",
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "note": "Use the 'models' array above, baseUrl WITHOUT /v1 suffix"
+    },
+    "openai_compatible": {
+      "format": "OpenAI API compatible",
+      "baseUrl": "http://localhost:8317/v1",
+      "apiKey": "dummy-not-used",
+      "note": "Use baseUrl WITH /v1 suffix for OpenAI-compatible clients"
+    },
+    "anthropic_compatible": {
+      "format": "Anthropic API compatible",
+      "baseUrl": "http://localhost:8317",
+      "apiKey": "dummy-not-used",
+      "note": "Use baseUrl WITHOUT /v1 suffix for Anthropic-compatible clients"
+    }
+  },
+  "extendedThinking": {
+    "description": "Extended Thinking enables deep reasoning for Claude models",
+    "syntax": "Add -thinking-N to model name, where N is token budget",
+    "budgets": {
+      "high": 32000,
+      "medium": 10000,
+      "low": 4000
+    },
+    "examples": [
+      "kiro-claude-sonnet-4-5-thinking-32000",
+      "claude-3-5-sonnet-20241022-thinking-10000",
+      "gemini-claude-sonnet-4-5-thinking-32000"
+    ],
+    "note": "Only works with Claude models (Sonnet, Opus, Haiku)"
+  },
+  "verifiedModels": {
+    "note": "These models were verified against CLIProxyAPIPlus /v1/models endpoint",
+    "timestamp": "2026-02-06",
+    "availableModels": [
+      "kiro-auto",
+      "kiro-claude-sonnet-4-5",
+      "kiro-claude-sonnet-4",
+      "kiro-claude-haiku-4-5",
+      "kiro-claude-opus-4-5",
+      "kiro-claude-sonnet-4-5-agentic",
+      "kiro-claude-sonnet-4-agentic",
+      "kiro-claude-haiku-4-5-agentic",
+      "kiro-claude-opus-4-5-agentic",
+      "gemini-2.5-pro",
+      "gemini-2.5-flash",
+      "gemini-2.5-flash-lite",
+      "gemini-3-pro-preview",
+      "gemini-3-flash-preview"
+    ]
+  }
+}

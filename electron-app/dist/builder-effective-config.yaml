@@ -1,0 +1,49 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.vibeproxy.app
+productName: VibeProxy
+files:
+  - filter:
+      - src/**/*
+      - ui/**/*
+      - assets/**/*
+mac:
+  category: public.app-category.developer-tools
+  icon: assets/icon.png
+  target:
+    - target: dmg
+      arch:
+        - x64
+    - target: zip
+      arch:
+        - x64
+  extraResources:
+    - from: cli-proxy-api-plus
+      to: cli-proxy-api-plus
+    - from: config.yaml
+      to: config.yaml
+win:
+  icon: assets/icon.png
+  target:
+    - nsis
+    - zip
+  extraResources:
+    - from: cli-proxy-api-plus
+      to: cli-proxy-api-plus
+    - from: config.yaml
+      to: config.yaml
+linux:
+  icon: assets/icon.png
+  target:
+    - AppImage
+    - deb
+  extraResources:
+    - from: cli-proxy-api-plus
+      to: cli-proxy-api-plus
+    - from: config.yaml
+      to: config.yaml
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+electronVersion: 28.3.3
