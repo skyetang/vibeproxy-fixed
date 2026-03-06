@@ -214,6 +214,66 @@
       "noImageSupport": false,
       "provider": "google",
       "service": "gemini"
+    },
+    {
+      "model": "gpt-5.4",
+      "id": "custom:GPT-5.4-17",
+      "index": 17,
+      "baseUrl": "http://localhost:8317/v1",
+      "apiKey": "dummy-not-used",
+      "displayName": "GPT-5.4",
+      "description": "Latest GPT-5.4 model from Codex",
+      "noImageSupport": false,
+      "provider": "openai",
+      "service": "codex"
+    },
+    {
+      "model": "gpt-5.3-codex-spark",
+      "id": "custom:GPT-5.3-Codex-Spark-18",
+      "index": 18,
+      "baseUrl": "http://localhost:8317/v1",
+      "apiKey": "dummy-not-used",
+      "displayName": "GPT-5.3 Codex Spark",
+      "description": "Fast GPT-5.3 Codex variant",
+      "noImageSupport": false,
+      "provider": "openai",
+      "service": "codex"
+    },
+    {
+      "model": "gpt-5.2-codex",
+      "id": "custom:GPT-5.2-Codex-19",
+      "index": 19,
+      "baseUrl": "http://localhost:8317/v1",
+      "apiKey": "dummy-not-used",
+      "displayName": "GPT-5.2 Codex",
+      "description": "GPT-5.2 optimized for coding",
+      "noImageSupport": false,
+      "provider": "openai",
+      "service": "codex"
+    },
+    {
+      "model": "gpt-5.1-codex-max",
+      "id": "custom:GPT-5.1-Codex-Max-20",
+      "index": 20,
+      "baseUrl": "http://localhost:8317/v1",
+      "apiKey": "dummy-not-used",
+      "displayName": "GPT-5.1 Codex Max",
+      "description": "Maximum capability GPT-5.1 Codex",
+      "noImageSupport": false,
+      "provider": "openai",
+      "service": "codex"
+    },
+    {
+      "model": "gpt-5-codex",
+      "id": "custom:GPT-5-Codex-21",
+      "index": 21,
+      "baseUrl": "http://localhost:8317/v1",
+      "apiKey": "dummy-not-used",
+      "displayName": "GPT-5 Codex",
+      "description": "GPT-5 optimized for coding tasks",
+      "noImageSupport": false,
+      "provider": "openai",
+      "service": "codex"
     }
   ],
   "additionalModels": {
@@ -347,6 +407,78 @@
     ],
     "codex": [
       {
+        "model": "gpt-5.4",
+        "displayName": "GPT-5.4",
+        "provider": "openai",
+        "service": "codex"
+      },
+      {
+        "model": "gpt-5.3-codex-spark",
+        "displayName": "GPT-5.3 Codex Spark",
+        "provider": "openai",
+        "service": "codex"
+      },
+      {
+        "model": "gpt-5.3-codex",
+        "displayName": "GPT-5.3 Codex",
+        "provider": "openai",
+        "service": "codex"
+      },
+      {
+        "model": "gpt-5.2-codex",
+        "displayName": "GPT-5.2 Codex",
+        "provider": "openai",
+        "service": "codex"
+      },
+      {
+        "model": "gpt-5.2",
+        "displayName": "GPT-5.2",
+        "provider": "openai",
+        "service": "codex"
+      },
+      {
+        "model": "gpt-5.1-codex-max",
+        "displayName": "GPT-5.1 Codex Max",
+        "provider": "openai",
+        "service": "codex"
+      },
+      {
+        "model": "gpt-5.1-codex",
+        "displayName": "GPT-5.1 Codex",
+        "provider": "openai",
+        "service": "codex"
+      },
+      {
+        "model": "gpt-5.1-codex-mini",
+        "displayName": "GPT-5.1 Codex Mini",
+        "provider": "openai",
+        "service": "codex"
+      },
+      {
+        "model": "gpt-5.1",
+        "displayName": "GPT-5.1",
+        "provider": "openai",
+        "service": "codex"
+      },
+      {
+        "model": "gpt-5-codex",
+        "displayName": "GPT-5 Codex",
+        "provider": "openai",
+        "service": "codex"
+      },
+      {
+        "model": "gpt-5-codex-mini",
+        "displayName": "GPT-5 Codex Mini",
+        "provider": "openai",
+        "service": "codex"
+      },
+      {
+        "model": "gpt-5",
+        "displayName": "GPT-5",
+        "provider": "openai",
+        "service": "codex"
+      },
+      {
         "model": "gpt-4-turbo",
         "displayName": "GPT-4 Turbo",
         "provider": "openai",
@@ -357,9 +489,9 @@
   "usage": {
     "cursor": {
       "format": "Cursor customModels format",
-      "baseUrl": "http://localhost:8317",
+      "baseUrl": "http://localhost:8317/v1",
       "apiKey": "dummy-not-used",
-      "note": "Use the 'models' array above, baseUrl WITHOUT /v1 suffix"
+      "note": "IMPORTANT: GPT models MUST use baseUrl WITH /v1 suffix. Kiro/Claude models use WITHOUT /v1 suffix. Provider must be 'openai' for GPT models, 'anthropic' for Kiro/Claude."
     },
     "openai_compatible": {
       "format": "OpenAI API compatible",
