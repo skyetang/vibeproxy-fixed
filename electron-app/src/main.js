@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, nativeImage, clipboard, Notification, shell } = require('electron');
+const { app, BrowserWindow, Tray, Menu, nativeImage, clipboard, Notification, shell, net, session } = require('electron');
 const remoteMain = require('@electron/remote/main');
 const path = require('path');
 const { spawn, execSync } = require('child_process');
@@ -15,6 +15,7 @@ if (!gotTheLock) { app.quit(); }
 const PROXY_PORT = 8317;
 const BACKEND_PORT = 8318;
 const AUTH_DIR = path.join(os.homedir(), '.cli-proxy-api');
+const CODEX_LOCAL_AUTH_FILE = path.join(os.homedir(), '.codex', 'auth.json');
 const APP_VERSION = '1.5.1';
 const CONFIG_FILE = path.join(AUTH_DIR, 'vibeproxy-config.json');
 
@@ -26,6 +27,8 @@ let thinkingProxyServer = null;
 let isServerRunning = false;
 let enabledProviders = {};
 let launchAtLogin = false;
+let selectedAccounts = {};
+let localProxyUrl = '';
 
 // OAuth provider keys mapping (same as Swift version)
 const OAUTH_PROVIDER_KEYS = {
@@ -60,11 +63,399 @@ function getSystemProxy() {
   return null;
 }
 
+function getEnvProxy() {
+  return process.env.HTTPS_PROXY ||
+    process.env.HTTP_PROXY ||
+    process.env.https_proxy ||
+    process.env.http_proxy ||
+    process.env.ALL_PROXY ||
+    process.env.all_proxy ||
+    null;
+}
+
 function getResourcePath(filename) {
   if (app.isPackaged) {
     return path.join(process.resourcesPath, filename);
   }
   return path.join(__dirname, '..', filename);
+}
+
+function sanitizeFilenamePart(value, fallback = 'account') {
+  const sanitized = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return sanitized || fallback;
+}
+
+function decodeJwtPayload(token) {
+  try {
+    if (!token || typeof token !== 'string') return null;
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+    return JSON.parse(Buffer.from(padded, 'base64').toString('utf8'));
+  } catch (e) {
+    return null;
+  }
+}
+
+function readAppConfig() {
+  try {
+    if (fs.existsSync(CONFIG_FILE)) {
+      return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+    }
+  } catch (e) {}
+  return {};
+}
+
+function writeAppConfig(config) {
+  ensureAuthDir();
+  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+  try { fs.chmodSync(CONFIG_FILE, 0o600); } catch (e) {}
+}
+
+function normalizeProxyUrl(proxyUrl) {
+  return String(proxyUrl || '').trim();
+}
+
+function getActiveProxyUrl() {
+  return normalizeProxyUrl(localProxyUrl) || getEnvProxy() || getSystemProxy();
+}
+
+async function applyNetworkProxy() {
+  if (!app.isReady()) {
+    return;
+  }
+  
+  const activeProxy = getActiveProxyUrl();
+  if (activeProxy) {
+    await session.defaultSession.setProxy({
+      mode: 'fixed_servers',
+      proxyRules: activeProxy,
+      proxyBypassRules: '<local>;127.0.0.1;localhost'
+    });
+    console.log(`[Network] Using proxy: ${activeProxy}`);
+  } else {
+    await session.defaultSession.setProxy({ mode: 'direct' });
+    console.log('[Network] Using direct connection');
+  }
+}
+
+function saveSelectedAccounts() {
+  try {
+    const config = readAppConfig();
+    config.launchAtLogin = launchAtLogin;
+    config.selectedAccounts = selectedAccounts;
+    config.localProxyUrl = localProxyUrl;
+    writeAppConfig(config);
+  } catch (e) {}
+}
+
+function mapAuthTypeToService(type) {
+  const normalized = (type || '').toLowerCase();
+  if (normalized === 'copilot') return 'github-copilot';
+  if (normalized === 'gemini-cli' || normalized === 'gemini') return 'gemini';
+  return normalized;
+}
+
+function readAuthFile(filePath) {
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
+function writeAuthFile(filePath, data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+  try { fs.chmodSync(filePath, 0o600); } catch (e) {}
+}
+
+function listAuthAccountEntries(serviceType = null) {
+  const entries = [];
+  ensureAuthDir();
+  
+  try {
+    const files = fs.readdirSync(AUTH_DIR);
+    for (const file of files) {
+      if (!file.endsWith('.json')) continue;
+      
+      try {
+        const filePath = path.join(AUTH_DIR, file);
+        const data = readAuthFile(filePath);
+        const mappedType = mapAuthTypeToService(data.type);
+        if (!mappedType) continue;
+        if (serviceType && mappedType !== serviceType) continue;
+        
+        entries.push({
+          id: file,
+          filePath,
+          type: mappedType,
+          data
+        });
+      } catch (e) {}
+    }
+  } catch (e) {}
+  
+  return entries;
+}
+
+function getPreferredAccountId(serviceType, accounts) {
+  if (serviceType !== 'codex') {
+    return null;
+  }
+  
+  const preferredId = selectedAccounts[serviceType];
+  if (preferredId && accounts.some(account => account.id === preferredId)) {
+    return preferredId;
+  }
+  
+  const enabledAccounts = accounts.filter(account => !account.disabled);
+  if (enabledAccounts.length === 1) {
+    return enabledAccounts[0].id;
+  }
+  
+  if (accounts.length === 1) {
+    return accounts[0].id;
+  }
+  
+  return null;
+}
+
+function parseDateValue(value) {
+  if (value == null || value === '') return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function parseEpochSeconds(value) {
+  const numeric = toNumber(value);
+  if (numeric == null) return null;
+  const date = new Date(numeric * 1000);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function toNumber(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  
+  if (typeof value === 'string') {
+    const normalized = value.replace(/,/g, '').trim();
+    if (/^-?\d+(\.\d+)?$/.test(normalized)) {
+      const parsed = Number(normalized);
+      return Number.isFinite(parsed) ? parsed : null;
+    }
+  }
+  
+  return null;
+}
+
+function normalizeLookupKey(key) {
+  return String(key || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+}
+
+function findFirstMatchingValue(root, keyNames) {
+  const targets = new Set(keyNames.map(normalizeLookupKey));
+  const visited = new Set();
+  
+  function walk(value) {
+    if (!value || typeof value !== 'object') {
+      return null;
+    }
+    if (visited.has(value)) {
+      return null;
+    }
+    visited.add(value);
+    
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const found = walk(item);
+        if (found !== null) return found;
+      }
+      return null;
+    }
+    
+    for (const [key, nested] of Object.entries(value)) {
+      if (targets.has(normalizeLookupKey(key))) {
+        return nested;
+      }
+    }
+    
+    for (const nested of Object.values(value)) {
+      const found = walk(nested);
+      if (found !== null) return found;
+    }
+    
+    return null;
+  }
+  
+  return walk(root);
+}
+
+function inferUsageCycle(startIso, endIso) {
+  if (!startIso || !endIso) return null;
+  const start = new Date(startIso);
+  const end = new Date(endIso);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+  
+  const days = Math.round((end - start) / (24 * 60 * 60 * 1000));
+  if (days >= 6 && days <= 8) return 'Weekly';
+  if (days >= 27 && days <= 32) return 'Monthly';
+  return `${days} days`;
+}
+
+function normalizeCodexUsageResponse(payload) {
+  function normalizeWindow(window) {
+    if (!window || typeof window !== 'object') return null;
+    const usedPercent = toNumber(window.used_percent);
+    return {
+      usedPercent,
+      remainingPercent: usedPercent == null ? null : Math.max(0, 100 - usedPercent),
+      limitWindowSeconds: toNumber(window.limit_window_seconds),
+      resetAfterSeconds: toNumber(window.reset_after_seconds),
+      resetAt: parseEpochSeconds(window.reset_at)
+    };
+  }
+  
+  function normalizeLimit(limit) {
+    if (!limit || typeof limit !== 'object') return null;
+    return {
+      allowed: limit.allowed !== false,
+      limitReached: limit.limit_reached === true,
+      primaryWindow: normalizeWindow(limit.primary_window),
+      secondaryWindow: normalizeWindow(limit.secondary_window)
+    };
+  }
+  
+  const rateLimit = normalizeLimit(payload.rate_limit);
+  const codeReviewRateLimit = normalizeLimit(payload.code_review_rate_limit);
+  if (rateLimit || codeReviewRateLimit) {
+    const primaryWindow = rateLimit && rateLimit.primaryWindow;
+    const codeReviewWindow = codeReviewRateLimit && codeReviewRateLimit.primaryWindow;
+    return {
+      email: payload.email || null,
+      accountId: payload.account_id || null,
+      planType: payload.plan_type || null,
+      rateLimit,
+      codeReviewRateLimit,
+      cycle: primaryWindow && primaryWindow.limitWindowSeconds
+        ? `${Math.round(primaryWindow.limitWindowSeconds / 86400)} days`
+        : null,
+      usedPercent: primaryWindow ? primaryWindow.usedPercent : null,
+      periodEnd: primaryWindow ? primaryWindow.resetAt : null,
+      promo: payload.promo || null,
+      credits: payload.credits || null,
+      raw: payload
+    };
+  }
+  
+  const used = toNumber(findFirstMatchingValue(payload, [
+    'currentUsageAmount',
+    'usageAmount',
+    'usedAmount',
+    'usageUsed',
+    'currentUsage',
+    'totalUsage',
+    'used'
+  ]));
+  const limit = toNumber(findFirstMatchingValue(payload, [
+    'usageLimitWithPrecision',
+    'usageLimit',
+    'totalLimit',
+    'limit',
+    'quota',
+    'max'
+  ]));
+  const remaining = toNumber(findFirstMatchingValue(payload, [
+    'remainingAmount',
+    'remainingUsage',
+    'remaining',
+    'availableAmount',
+    'available',
+    'left'
+  ]));
+  const start = parseDateValue(findFirstMatchingValue(payload, [
+    'billingPeriodStart',
+    'currentPeriodStart',
+    'periodStart',
+    'cycleStart',
+    'startDate',
+    'startsAt'
+  ]));
+  const end = parseDateValue(findFirstMatchingValue(payload, [
+    'billingPeriodEnd',
+    'currentPeriodEnd',
+    'periodEnd',
+    'cycleEnd',
+    'resetDate',
+    'resetAt',
+    'resetsAt',
+    'endDate'
+  ]));
+  const cycle = findFirstMatchingValue(payload, [
+    'billingPeriod',
+    'usagePeriod',
+    'period',
+    'cycle',
+    'interval'
+  ]);
+  
+  let normalizedUsed = used;
+  let normalizedRemaining = remaining;
+  if (normalizedUsed == null && limit != null && remaining != null) {
+    normalizedUsed = Math.max(limit - remaining, 0);
+  }
+  if (normalizedRemaining == null && limit != null && used != null) {
+    normalizedRemaining = Math.max(limit - used, 0);
+  }
+  
+  return {
+    used: normalizedUsed,
+    remaining: normalizedRemaining,
+    limit,
+    periodStart: start,
+    periodEnd: end,
+    cycle: typeof cycle === 'string' && cycle.trim() ? cycle.trim() : inferUsageCycle(start, end),
+    raw: payload
+  };
+}
+
+function readCodexLocalAuth() {
+  if (!fs.existsSync(CODEX_LOCAL_AUTH_FILE)) {
+    return null;
+  }
+  return JSON.parse(fs.readFileSync(CODEX_LOCAL_AUTH_FILE, 'utf8'));
+}
+
+function extractCodexLocalAuthMetadata(localAuth) {
+  const tokens = localAuth && localAuth.tokens ? localAuth.tokens : {};
+  const accessPayload = decodeJwtPayload(tokens.access_token);
+  const idPayload = decodeJwtPayload(tokens.id_token);
+  const accessAuth = accessPayload && accessPayload['https://api.openai.com/auth'];
+  const accessProfile = accessPayload && accessPayload['https://api.openai.com/profile'];
+  const idAuth = idPayload && idPayload['https://api.openai.com/auth'];
+  
+  const email = (idPayload && idPayload.email) ||
+    (accessProfile && accessProfile.email) ||
+    localAuth.email ||
+    'codex-user';
+  const accountId = tokens.account_id ||
+    (accessAuth && accessAuth.chatgpt_account_id) ||
+    (idAuth && idAuth.chatgpt_account_id) ||
+    null;
+  const expired = accessPayload && accessPayload.exp
+    ? new Date(accessPayload.exp * 1000).toISOString()
+    : null;
+  const planType = (idAuth && idAuth.chatgpt_plan_type) ||
+    (accessAuth && accessAuth.chatgpt_plan_type) ||
+    'account';
+  
+  return {
+    email,
+    accountId,
+    expired,
+    planType
+  };
 }
 
 // ============== Provider Management ==============
@@ -91,12 +482,14 @@ function saveEnabledProviders() {
 
 function loadLaunchAtLogin() {
   try {
-    if (fs.existsSync(CONFIG_FILE)) {
-      const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-      launchAtLogin = config.launchAtLogin || false;
-    }
+    const config = readAppConfig();
+    launchAtLogin = config.launchAtLogin || false;
+    selectedAccounts = config.selectedAccounts || {};
+    localProxyUrl = normalizeProxyUrl(config.localProxyUrl || '');
   } catch (e) {
     launchAtLogin = false;
+    selectedAccounts = {};
+    localProxyUrl = '';
   }
   // Sync with system
   app.setLoginItemSettings({ openAtLogin: launchAtLogin });
@@ -107,19 +500,36 @@ function setLaunchAtLogin(enabled) {
   app.setLoginItemSettings({ openAtLogin: enabled });
   // Save to config
   try {
-    ensureAuthDir();
-    let config = {};
-    if (fs.existsSync(CONFIG_FILE)) {
-      config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-    }
+    const config = readAppConfig();
     config.launchAtLogin = enabled;
-    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+    config.selectedAccounts = selectedAccounts;
+    config.localProxyUrl = localProxyUrl;
+    writeAppConfig(config);
   } catch (e) {}
   console.log(`[Config] Launch at login: ${enabled}`);
 }
 
 function getLaunchAtLogin() {
   return launchAtLogin;
+}
+
+function getLocalProxyUrl() {
+  return localProxyUrl;
+}
+
+async function setLocalProxyUrl(proxyUrl) {
+  try {
+    localProxyUrl = normalizeProxyUrl(proxyUrl);
+    const config = readAppConfig();
+    config.launchAtLogin = launchAtLogin;
+    config.selectedAccounts = selectedAccounts;
+    config.localProxyUrl = localProxyUrl;
+    writeAppConfig(config);
+    await applyNetworkProxy();
+    return { success: true, proxyUrl: localProxyUrl };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
 }
 
 function isProviderEnabled(key) {
@@ -337,51 +747,70 @@ function getConfigPath() {
 
 function getAuthAccounts() {
   const accounts = [];
-  ensureAuthDir();
   
-  try {
-    const files = fs.readdirSync(AUTH_DIR);
-    for (const file of files) {
-      if (!file.endsWith('.json')) continue;
-      
+  for (const entry of listAuthAccountEntries()) {
+    const data = entry.data;
+    
+    let expired = false;
+    if (data.expired) {
       try {
-        const filePath = path.join(AUTH_DIR, file);
-        const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-        const type = (data.type || '').toLowerCase();
-        
-        // Map type to service key
-        let serviceType = type;
-        if (type === 'copilot') serviceType = 'github-copilot';
-        if (type === 'gemini-cli' || type === 'gemini') serviceType = 'gemini';
-        
-        // Parse expiration date
-        let expired = false;
-        if (data.expired) {
-          try {
-            const expDate = new Date(data.expired);
-            expired = expDate < new Date();
-          } catch (e) {}
-        }
-        
-        accounts.push({
-          id: file,
-          type: serviceType,
-          email: data.email || data.login || file,
-          login: data.login,
-          expired: expired,
-          expiredDate: data.expired,
-          path: filePath
-        });
+        const expDate = new Date(data.expired);
+        expired = expDate < new Date();
       } catch (e) {}
     }
-  } catch (e) {}
+    
+    accounts.push({
+      id: entry.id,
+      type: entry.type,
+      email: data.email || data.login || entry.id,
+      login: data.login,
+      expired,
+      expiredDate: data.expired,
+      disabled: data.disabled === true,
+      selected: false,
+      path: entry.filePath
+    });
+  }
+  
+  const serviceTypes = [...new Set(accounts.map(account => account.type))];
+  for (const serviceType of serviceTypes) {
+    const serviceAccounts = accounts.filter(account => account.type === serviceType);
+    const selectedId = getPreferredAccountId(serviceType, serviceAccounts);
+    for (const account of serviceAccounts) {
+      account.selected = account.id === selectedId;
+    }
+  }
   
   return accounts;
 }
 
 function deleteAccount(filePath) {
   try {
+    const filename = path.basename(filePath);
+    let deletedType = null;
+    
+    try {
+      deletedType = mapAuthTypeToService(readAuthFile(filePath).type);
+    } catch (e) {}
+    
     fs.unlinkSync(filePath);
+    
+    if (deletedType === 'codex' && selectedAccounts.codex === filename) {
+      const remaining = listAuthAccountEntries('codex');
+      if (remaining.length > 0) {
+        const fallback = remaining.find(entry => entry.data.disabled !== true) || remaining[0];
+        selectedAccounts.codex = fallback.id;
+        for (const entry of remaining) {
+          entry.data.disabled = entry.id !== fallback.id;
+          writeAuthFile(entry.filePath, entry.data);
+        }
+      } else {
+        delete selectedAccounts.codex;
+      }
+      saveSelectedAccounts();
+      getConfigPath();
+    }
+    
     return true;
   } catch (e) {
     return false;
@@ -408,10 +837,224 @@ function saveZaiApiKey(apiKey) {
   return true;
 }
 
+function checkCodexLocalAuth() {
+  try {
+    const localAuth = readCodexLocalAuth();
+    return !!(localAuth &&
+      localAuth.auth_mode === 'chatgpt' &&
+      localAuth.tokens &&
+      localAuth.tokens.access_token);
+  } catch (e) {
+    return false;
+  }
+}
+
+function getCodexLocalAuthPath() {
+  return CODEX_LOCAL_AUTH_FILE;
+}
+
+function importCodexLocalAuth() {
+  try {
+    const localAuth = readCodexLocalAuth();
+    if (!localAuth) {
+      return { success: false, error: 'Local Codex auth not found at ~/.codex/auth.json' };
+    }
+    
+    if (localAuth.auth_mode !== 'chatgpt') {
+      return { success: false, error: `Unsupported Codex auth mode: ${localAuth.auth_mode || 'unknown'}` };
+    }
+    
+    if (!localAuth.tokens || !localAuth.tokens.access_token) {
+      return { success: false, error: 'Local Codex auth is missing an access token' };
+    }
+    
+    const metadata = extractCodexLocalAuthMetadata(localAuth);
+    const existingCodexAccounts = listAuthAccountEntries('codex');
+    const existingEntry = existingCodexAccounts.find((entry) =>
+      (metadata.accountId && entry.data.account_id === metadata.accountId) ||
+      (metadata.email && entry.data.email === metadata.email && entry.data.imported_from === 'codex-local')
+    );
+    
+    const filename = existingEntry
+      ? existingEntry.id
+      : `codex-${sanitizeFilenamePart(metadata.accountId || Date.now(), 'local')}-${sanitizeFilenamePart(metadata.email, 'user')}-${sanitizeFilenamePart(metadata.planType, 'account')}.json`;
+    const filePath = existingEntry ? existingEntry.filePath : path.join(AUTH_DIR, filename);
+    const shouldSelect = existingEntry
+      ? selectedAccounts.codex === existingEntry.id
+      : existingCodexAccounts.length === 0;
+    
+    const authData = {
+      type: 'codex',
+      email: metadata.email,
+      access_token: localAuth.tokens.access_token,
+      refresh_token: localAuth.tokens.refresh_token || null,
+      id_token: localAuth.tokens.id_token || null,
+      account_id: metadata.accountId,
+      expired: metadata.expired,
+      last_refresh: localAuth.last_refresh || new Date().toISOString(),
+      imported_from: 'codex-local',
+      auth_source_path: CODEX_LOCAL_AUTH_FILE,
+      disabled: shouldSelect ? false : (existingEntry ? existingEntry.data.disabled === true : true)
+    };
+    
+    if (existingEntry && existingEntry.data.created) {
+      authData.created = existingEntry.data.created;
+    } else {
+      authData.created = new Date().toISOString();
+    }
+    
+    ensureAuthDir();
+    writeAuthFile(filePath, authData);
+    
+    if (shouldSelect) {
+      selectedAccounts.codex = filename;
+      saveSelectedAccounts();
+    }
+    
+    getConfigPath();
+    
+    return {
+      success: true,
+      account: {
+        id: filename,
+        email: metadata.email,
+        accountId: metadata.accountId,
+        selected: shouldSelect,
+        updated: !!existingEntry
+      }
+    };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+}
+
+function setSelectedCodexAccount(accountId) {
+  try {
+    const codexAccounts = listAuthAccountEntries('codex');
+    if (codexAccounts.length === 0) {
+      return { success: false, error: 'No Codex accounts found' };
+    }
+    
+    const target = codexAccounts.find(account => account.id === accountId);
+    if (!target) {
+      return { success: false, error: 'Selected Codex account not found' };
+    }
+    
+    for (const account of codexAccounts) {
+      account.data.disabled = account.id !== accountId;
+      writeAuthFile(account.filePath, account.data);
+    }
+    
+    selectedAccounts.codex = accountId;
+    saveSelectedAccounts();
+    getConfigPath();
+    
+    return { success: true, selectedId: accountId };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
+}
+
+function getCodexUsage(accountId) {
+  return new Promise((resolve) => {
+    try {
+      const account = listAuthAccountEntries('codex').find(entry => entry.id === accountId);
+      if (!account) {
+        resolve({ success: false, error: 'Codex account not found' });
+        return;
+      }
+      
+      const accessToken = account.data.access_token || account.data.token;
+      if (!accessToken) {
+        resolve({ success: false, error: 'This Codex account is missing an access token' });
+        return;
+      }
+      
+      const request = net.request({
+        method: 'GET',
+        url: 'https://chatgpt.com/backend-api/wham/usage'
+      });
+      let settled = false;
+      const finish = (result) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        resolve(result);
+      };
+      const timeout = setTimeout(() => {
+        try { request.abort(); } catch (e) {}
+        finish({ success: false, error: 'Usage query timed out' });
+      }, 15000);
+      
+      request.setHeader('Authorization', `Bearer ${accessToken}`);
+      request.setHeader('Accept', 'application/json');
+      request.setHeader('User-Agent', 'ToapiProxy');
+      if (account.data.account_id) {
+        request.setHeader('ChatGPT-Account-Id', account.data.account_id);
+      }
+      
+      request.on('response', (response) => {
+        let body = '';
+        
+        response.on('data', (chunk) => {
+          body += chunk.toString();
+        });
+        
+        response.on('end', () => {
+          if (response.statusCode < 200 || response.statusCode >= 300) {
+            finish({
+              success: false,
+              error: `Usage query failed with HTTP ${response.statusCode}`,
+              details: body.slice(0, 500)
+            });
+            return;
+          }
+          
+          try {
+            const payload = JSON.parse(body || '{}');
+            const usage = normalizeCodexUsageResponse(payload);
+            usage.retrievedAt = new Date().toISOString();
+            finish({
+              success: true,
+              usage
+            });
+          } catch (e) {
+            finish({
+              success: false,
+              error: 'Usage response was not valid JSON',
+              details: body.slice(0, 500)
+            });
+          }
+        });
+      });
+      
+      request.on('error', (err) => {
+        finish({ success: false, error: err.message });
+      });
+      
+      request.end();
+    } catch (e) {
+      resolve({ success: false, error: e.message });
+    }
+  });
+}
+
 // ============== Thinking Proxy ==============
 
 function startThinkingProxy() {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finishResolve = (value) => {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+    };
+    const finishReject = (error) => {
+      if (settled) return;
+      settled = true;
+      reject(error);
+    };
+    
     thinkingProxyServer = http.createServer((req, res) => {
       let body = '';
       req.on('data', chunk => body += chunk.toString());
@@ -464,9 +1107,20 @@ function startThinkingProxy() {
       });
     });
     
+    thinkingProxyServer.on('error', (err) => {
+      thinkingProxyServer = null;
+      if (err && err.code === 'EADDRINUSE') {
+        finishReject(new Error(
+          `Port ${PROXY_PORT} is already in use on 127.0.0.1. Another VibeProxy instance or another app is already running there. Please quit the old instance and try again.`
+        ));
+        return;
+      }
+      finishReject(err);
+    });
+    
     thinkingProxyServer.listen(PROXY_PORT, '127.0.0.1', () => {
       console.log(`[Proxy] Listening on port ${PROXY_PORT}`);
-      resolve();
+      finishResolve();
     });
   });
 }
@@ -532,13 +1186,15 @@ function startBackendServer() {
     try { fs.chmodSync(binaryPath, 0o755); } catch (e) {}
     
     const env = { ...process.env };
-    const proxyUrl = getSystemProxy();
+    const proxyUrl = getActiveProxyUrl();
     if (proxyUrl) {
       env.HTTP_PROXY = proxyUrl;
       env.HTTPS_PROXY = proxyUrl;
       env.http_proxy = proxyUrl;
       env.https_proxy = proxyUrl;
-      console.log(`[Backend] Using system proxy: ${proxyUrl}`);
+      env.ALL_PROXY = proxyUrl;
+      env.all_proxy = proxyUrl;
+      console.log(`[Backend] Using proxy: ${proxyUrl}`);
     }
     
     serverProcess = spawn(binaryPath, ['-config', configPath], {
@@ -626,12 +1282,14 @@ function runAuthCommand(command, email = null) {
     const configPath = getResourcePath('config.yaml');
     
     const env = { ...process.env };
-    const proxyUrl = getSystemProxy();
+    const proxyUrl = getActiveProxyUrl();
     if (proxyUrl) {
       env.HTTP_PROXY = proxyUrl;
       env.HTTPS_PROXY = proxyUrl;
       env.http_proxy = proxyUrl;
       env.https_proxy = proxyUrl;
+      env.ALL_PROXY = proxyUrl;
+      env.all_proxy = proxyUrl;
     }
     
     const proc = spawn(binaryPath, ['--config', configPath, command], {
@@ -796,13 +1454,14 @@ function openSettings() {
 
 // ============== App Lifecycle ==============
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   if (process.platform === 'darwin') {
     app.dock.hide();
   }
   
   loadEnabledProviders();
   loadLaunchAtLogin();
+  await applyNetworkProxy();
   createTray();
   startServer();
   
@@ -840,6 +1499,11 @@ global.vibeProxy = {
   // Auth
   getAuthAccounts,
   deleteAccount,
+  checkCodexLocalAuth,
+  getCodexLocalAuthPath,
+  importCodexLocalAuth,
+  setSelectedCodexAccount,
+  getCodexUsage,
   runAuthCommand,
   saveZaiApiKey,
   
@@ -851,6 +1515,8 @@ global.vibeProxy = {
   // Launch at login
   getLaunchAtLogin,
   setLaunchAtLogin,
+  getLocalProxyUrl,
+  setLocalProxyUrl,
   
   // Utility
   openAuthFolder: () => {

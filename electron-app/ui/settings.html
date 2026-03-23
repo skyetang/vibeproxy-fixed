@@ -57,6 +57,8 @@
     }
     .row:last-child { border-bottom: none; }
     .row-label { color: var(--text-primary); }
+    .row-value { color: var(--text-secondary); max-width: 220px; text-align: right; word-break: break-all; }
+    .row-actions { display: flex; align-items: center; gap: 8px; }
     
     /* Status dot */
     .dot {
@@ -68,6 +70,7 @@
     .dot.green { background: var(--green); }
     .dot.red { background: var(--red); }
     .dot.orange { background: var(--orange); }
+    .dot.gray { background: var(--text-secondary); }
     
     /* Buttons */
     button {
@@ -86,6 +89,23 @@
     button.secondary { background: var(--bg-tertiary); }
     button.plain { background: transparent; color: var(--text-primary); padding: 5px 8px; }
     button.danger { background: transparent; color: var(--red); }
+    .language-picker {
+      display: inline-flex;
+      gap: 6px;
+      padding: 4px;
+      border-radius: 999px;
+      background: var(--bg-tertiary);
+    }
+    .language-btn {
+      background: transparent;
+      color: var(--text-secondary);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+    .language-btn.active {
+      background: var(--accent);
+      color: white;
+    }
     
     /* Toggle */
     .toggle {
@@ -134,11 +154,132 @@
     .accounts-list { padding: 8px 0 0 50px; display: none; }
     .accounts-list.show { display: block; }
     .account-item {
-      display: flex; align-items: center; gap: 8px;
-      padding: 6px 0; font-size: 12px;
+      display: flex; flex-direction: column; gap: 8px;
+      padding: 8px 0; font-size: 12px;
     }
-    .account-email { color: var(--text-secondary); flex: 1; }
+    .account-line {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .account-email { color: var(--text-secondary); flex: 1; min-width: 0; }
     .account-email.expired { color: var(--orange); }
+    .account-actions {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    }
+    .account-status {
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(10,132,255,0.15);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .usage-card {
+      margin-left: 16px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: var(--bg-tertiary);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .usage-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0;
+      background: transparent;
+      text-align: left;
+    }
+    .usage-heading {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .usage-title {
+      color: var(--text-primary);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .usage-subtitle {
+      color: var(--text-secondary);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .usage-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .usage-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+    .usage-pill {
+      min-width: 88px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .usage-pill-label {
+      color: var(--text-secondary);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .usage-pill-value {
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .usage-pill.good .usage-pill-value { color: var(--green); }
+    .usage-pill.warn .usage-pill-value { color: var(--orange); }
+    .usage-pill.bad .usage-pill-value { color: var(--red); }
+    .usage-sections {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-top: 4px;
+      border-top: 0.5px solid rgba(255,255,255,0.08);
+    }
+    .usage-section {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .usage-section-title {
+      color: var(--text-primary);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .usage-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .usage-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .usage-label { color: var(--text-secondary); }
+    .usage-value { color: var(--text-primary); text-align: right; }
+    .usage-note {
+      color: var(--text-secondary);
+      line-height: 1.4;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .usage-error { color: var(--orange); }
     .no-accounts { padding: 6px 0 0 50px; font-size: 12px; color: var(--text-secondary); }
     
     /* Spinner */
@@ -200,10 +341,10 @@
     <div class="section">
       <div class="section-content">
         <div class="row">
-          <span class="row-label">Server status</span>
+          <span class="row-label" id="serverStatusLabel">服务状态</span>
           <button class="plain" id="serverBtn" onclick="toggleServer()">
             <span class="dot" id="serverDot"></span>
-            <span id="serverStatus">Stopped</span>
+            <span id="serverStatus">未启动</span>
           </button>
         </div>
       </div>
@@ -213,28 +354,43 @@
     <div class="section">
       <div class="section-content">
         <div class="row">
-          <span class="row-label">Launch at login</span>
+          <span class="row-label" id="languageLabel">语言</span>
+          <div class="language-picker">
+            <button class="language-btn" id="languageZhBtn" onclick="setLanguage('zh')">中文</button>
+            <button class="language-btn" id="languageEnBtn" onclick="setLanguage('en')">EN</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="row-label" id="launchAtLoginLabel">开机启动</span>
           <div class="toggle" id="launchToggle" onclick="toggleLaunchAtLogin()"></div>
         </div>
         <div class="row">
-          <span class="row-label">Auth files</span>
-          <button class="secondary" onclick="vp.openAuthFolder()">Open Folder</button>
+          <span class="row-label" id="authFilesLabel">认证文件</span>
+          <button class="secondary" id="openAuthFolderBtn" onclick="vp.openAuthFolder()">打开文件夹</button>
+        </div>
+        <div class="row">
+          <span class="row-label" id="localProxyLabel">本地代理</span>
+          <div class="row-actions">
+            <span class="row-value" id="proxyValue">未设置</span>
+            <button class="secondary" id="proxyBtn" onclick="configureProxy()">设置</button>
+            <button class="plain hidden" id="clearProxyBtn" onclick="clearProxy()">清除</button>
+          </div>
         </div>
       </div>
     </div>
     
     <!-- Services -->
     <div class="section">
-      <div class="section-header">Services</div>
+      <div class="section-header" id="servicesHeader">服务</div>
       <div class="section-content" id="services"></div>
     </div>
     
     <!-- Footer -->
     <div class="footer">
-      <p>VibeProxy v<span id="version"></span> was made possible thanks to 
-        <a href="https://github.com/router-for-me/CLIProxyAPIPlus" target="_blank">CLIProxyAPIPlus</a> | MIT License</p>
-      <p style="margin-top:4px">© 2026 <a href="https://automaze.io" target="_blank">Automaze, Ltd.</a> All rights reserved.</p>
-      <p style="margin-top:8px"><a href="https://github.com/automazeio/vibeproxy/issues" target="_blank">Report an issue</a></p>
+      <p id="footerLine1">VibeProxy v<span id="version"></span> 基于
+        <a href="https://github.com/router-for-me/CLIProxyAPIPlus" target="_blank">CLIProxyAPIPlus</a> 构建 | MIT 许可证</p>
+      <p id="footerLine2" style="margin-top:4px">© 2026 <a href="https://automaze.io" target="_blank">Automaze, Ltd.</a> 保留所有权利。</p>
+      <p id="footerLine3" style="margin-top:8px"><a href="https://github.com/automazeio/vibeproxy/issues" target="_blank">反馈问题</a></p>
     </div>
   </div>
   
@@ -245,8 +401,8 @@
       <p id="modalDesc"></p>
       <input type="text" id="modalInput" placeholder="">
       <div class="modal-buttons">
-        <button class="secondary" onclick="closeModal()">Cancel</button>
-        <button id="modalSubmitBtn" onclick="submitModal()">Continue</button>
+        <button class="secondary" id="modalCancelBtn" onclick="closeModal()">取消</button>
+        <button id="modalSubmitBtn" onclick="submitModal()">继续</button>
       </div>
     </div>
   </div>
@@ -257,7 +413,7 @@
       <h3 id="alertTitle"></h3>
       <p id="alertMsg"></p>
       <div class="modal-buttons">
-        <button onclick="closeAlert()">OK</button>
+        <button id="alertOkBtn" onclick="closeAlert()">确定</button>
       </div>
     </div>
   </div>
@@ -268,8 +424,8 @@
       <h3 id="confirmTitle"></h3>
       <p id="confirmMsg"></p>
       <div class="modal-buttons">
-        <button class="secondary" onclick="doCancelConfirm()">Cancel</button>
-        <button class="danger" id="confirmBtn" onclick="doConfirm()">Remove</button>
+        <button class="secondary" id="confirmCancelBtn" onclick="doCancelConfirm()">取消</button>
+        <button class="danger" id="confirmBtn" onclick="doConfirm()">删除</button>
       </div>
     </div>
   </div>
@@ -282,73 +438,491 @@
     } catch (e) {
       vp = require('electron').remote.getGlobal('vibeProxy');
     }
-    
-    // Services config
+
+    const LANGUAGE_STORAGE_KEY = 'vibeproxy-language';
+    const appVersion = vp.getVersion();
     const SERVICES = [
-      { type: 'antigravity', name: 'Antigravity', icon: 'icon-antigravity.png', cmd: '-antigravity-login',
-        help: 'OAuth-based access to various AI models including Gemini and Claude.' },
+      { type: 'antigravity', name: 'Antigravity', icon: 'icon-antigravity.png', cmd: '-antigravity-login' },
       { type: 'claude', name: 'Claude Code', icon: 'icon-claude.png', cmd: '-claude-login' },
       { type: 'codex', name: 'Codex', icon: 'icon-codex.png', cmd: '-codex-login' },
-      { type: 'gemini', name: 'Gemini', icon: 'icon-gemini.png', cmd: '-login',
-        help: '⚠️ If you have multiple projects, authentication will use your default project.' },
-      { type: 'github-copilot', name: 'GitHub Copilot', icon: 'icon-copilot.png', cmd: '-github-copilot-login',
-        help: 'Access to Claude, GPT, Gemini and other models via your Copilot subscription.' },
-      { type: 'kiro', name: 'Kiro (AWS)', icon: 'icon-kiro.png', webAuth: true,
-        help: 'AWS CodeWhisperer/Kiro - supports Google OAuth, AWS Builder ID, and token import from Kiro IDE.' },
+      { type: 'gemini', name: 'Gemini', icon: 'icon-gemini.png', cmd: '-login' },
+      { type: 'github-copilot', name: 'GitHub Copilot', icon: 'icon-copilot.png', cmd: '-github-copilot-login' },
+      { type: 'kiro', name: 'Kiro (AWS)', icon: 'icon-kiro.png', webAuth: true },
       { type: 'qwen', name: 'Qwen', icon: 'icon-qwen.png', cmd: '-qwen-login', needsEmail: true },
-      { type: 'zai', name: 'Z.AI GLM', icon: 'icon-zai.png', needsApiKey: true,
-        help: 'Access to GLM-4.7 and other models via API key.' }
+      { type: 'zai', name: 'Z.AI GLM', icon: 'icon-zai.png', needsApiKey: true }
     ];
-    
+    const TRANSLATIONS = {
+      zh: {
+        static: {
+          title: 'VibeProxy',
+          serverStatus: '服务状态',
+          language: '语言',
+          launchAtLogin: '开机启动',
+          authFiles: '认证文件',
+          openFolder: '打开文件夹',
+          localProxy: '本地代理',
+          services: '服务',
+          cancel: '取消',
+          continue: '继续',
+          ok: '确定',
+          delete: '删除',
+          footerLine1: `VibeProxy v${appVersion} 基于 <a href="https://github.com/router-for-me/CLIProxyAPIPlus" target="_blank">CLIProxyAPIPlus</a> 构建 | MIT 许可证`,
+          footerLine2: '© 2026 <a href="https://automaze.io" target="_blank">Automaze, Ltd.</a> 保留所有权利。',
+          footerLine3: '<a href="https://github.com/automazeio/vibeproxy/issues" target="_blank">反馈问题</a>'
+        },
+        common: {
+          unknown: '未知',
+          success: '成功',
+          error: '错误',
+          save: '保存',
+          set: '设置',
+          edit: '编辑',
+          clear: '清除',
+          running: '运行中',
+          stopped: '未启动',
+          disabled: '已停用',
+          yes: '是',
+          no: '否',
+          available: '可用',
+          blocked: '已阻止',
+          refresh: '刷新',
+          confirm: '确认'
+        },
+        services: {
+          addAccount: '添加账号',
+          connectedAccounts: ({ count }) => `${count} 个已连接账号`,
+          activeAccount: ({ email }) => `当前账号: ${email}`,
+          selectCodexHint: '选择一个账号后将不再轮询',
+          roundRobin: '轮询 + 自动故障切换',
+          inUse: '使用中',
+          using: '使用中',
+          use: '启用',
+          switching: '切换中...',
+          remove: '删除',
+          noAccounts: '暂无已连接账号',
+          expired: '已过期'
+        },
+        proxy: {
+          notSet: '未设置',
+          title: '本地代理',
+          description: '输入本地代理地址，例如 http://127.0.0.1:7890 或 socks5://127.0.0.1:1080',
+          saveFailedTitle: '代理设置失败',
+          saveFailedMessage: '保存本地代理失败。',
+          savedTitle: '代理已保存',
+          savedWithProxy: ({ proxyUrl }) => `本地代理已保存：\n\n${proxyUrl}\n\n后续服务请求会通过这个代理发送。`,
+          savedWithoutProxy: '本地代理已清除，后续请求将使用直连或系统代理设置。',
+          clearedTitle: '代理已清除',
+          clearedMessage: '本地代理已清除。'
+        },
+        codex: {
+          selectFailed: '切换失败',
+          selectFailedMessage: '切换 Codex 账号失败。',
+          authTitle: 'Codex 认证',
+          authPrompt: ({ path }) => `请选择认证方式：\n\n• 网页认证\n• 从本地 Codex 登录导入 (${path})`,
+          webAuth: '网页认证',
+          importLocal: '从本地导入',
+          importSuccess: '导入成功',
+          importFailed: '导入失败',
+          importMessage: ({ action, email, selected }) => `已从本地登录${action} Codex 账号。\n\n账号：${email}${selected ? '\n\n该账号已设为当前使用账号。' : ''}`,
+          importActionUpdated: '更新',
+          importActionImported: '导入'
+        },
+        kiro: {
+          serverNotRunningTitle: '服务未启动',
+          serverNotRunningMessage: '请先启动服务，再进行 Kiro 认证。',
+          authTitle: 'Kiro 认证',
+          authPrompt: '请选择认证方式：\n\n• 网页认证 (Google OAuth / AWS Builder ID)\n• 从 Kiro IDE 导入令牌\n• 从 IDE 同步已有令牌',
+          authPromptImportOnly: '请选择认证方式：\n\n• 网页认证 (Google OAuth / AWS Builder ID)\n• 从 Kiro IDE 导入令牌',
+          authOpened: '已在浏览器打开 Kiro 认证。\n\n你可以：\n• 使用 Google OAuth 登录\n• 使用 AWS Builder ID 登录\n\n应用会自动检测你的凭证。',
+          syncFailed: '同步失败',
+          importFailed: '导入失败',
+          syncSuccess: ({ count }) => `已从 IDE 同步 ${count} 个 Kiro 令牌。\n\n令牌已更新为最新凭证。`,
+          importSuccess: '已从 Kiro IDE 成功导入令牌。',
+          syncFromIde: '从 IDE 同步',
+          importFromIde: '从 IDE 导入'
+        },
+        auth: {
+          started: '认证已开始',
+          failed: '认证失败',
+          failedMessage: ({ details }) => `请检查浏览器是否已打开后重试。\n\n详情：${details}`,
+          genericBrowserOpened: '已在浏览器中打开认证流程。',
+          antigravity: '已在浏览器打开 Antigravity 认证。\n\n请在浏览器中完成登录。\n\n应用会自动检测你的凭证。',
+          claude: '已在浏览器打开 Claude Code 认证。\n\n请在浏览器中完成登录。\n\n应用会自动检测你的凭证。',
+          codex: '已在浏览器打开 Codex 认证。\n\n请在浏览器中完成登录。\n\n应用会自动检测你的凭证。',
+          gemini: '已在浏览器打开 Gemini 认证。\n\n请在浏览器中完成登录。\n\n如果你有多个项目，将使用默认项目。',
+          githubCopilot: 'GitHub Copilot 认证已开始。\n\n请访问 github.com/login/device 并输入显示的代码。\n\n应用会自动检测你的凭证。',
+          qwen: '已在浏览器打开 Qwen 认证。\n\n请在浏览器中完成登录。'
+        },
+        qwen: {
+          title: 'Qwen 账号邮箱',
+          description: '请输入你的 Qwen 账号邮箱',
+          placeholder: 'your.email@example.com'
+        },
+        zai: {
+          title: 'Z.AI API Key',
+          description: '请输入你的 Z.AI API Key（z.ai/manage-apikey/apikey-list）',
+          addKey: '添加密钥',
+          success: 'Z.AI API Key 已添加成功。\n\n现在可以通过代理使用 GLM 模型了。'
+        },
+        remove: {
+          title: '删除账号',
+          confirm: ({ email, serviceName }) => `确认从 ${serviceName} 删除 ${email} 吗？`,
+          removedTitle: '已删除',
+          removedMessage: ({ email }) => `已删除 ${email}`,
+          failed: '删除账号失败'
+        },
+        usage: {
+          query: '查询用量',
+          refresh: '刷新用量',
+          querying: '正在查询当前用量...',
+          failed: '查询用量失败。',
+          overview: 'Codex 用量概览',
+          expand: '展开',
+          collapse: '折叠',
+          updatedAt: '查询时间',
+          plan: '套餐',
+          status: '状态',
+          limitReached: '已触顶',
+          used: '已用',
+          remaining: '剩余',
+          cycle: '周期',
+          resetAt: '重置时间',
+          timeLeft: '距离重置',
+          periodStart: '周期开始',
+          windowLength: '窗口长度',
+          codeReview: '代码审查',
+          codeReviewStatus: '代码审查状态',
+          reviewUsed: '代码审查已用',
+          reviewResetAt: '代码审查重置时间',
+          window5h: '5H 窗口',
+          window5hRemaining: '5H 剩余',
+          windowWeek: '一周窗口',
+          windowWeekRemaining: '一周剩余',
+          primaryWindow: '主窗口',
+          secondaryWindow: '次窗口',
+          subtitleFallback: '点击展开查看详细用量',
+          subtitleUpdated: ({ value }) => `上次查询：${value}`,
+          noData: '接口未返回可展示的用量数据。'
+        }
+      },
+      en: {
+        static: {
+          title: 'VibeProxy',
+          serverStatus: 'Server Status',
+          language: 'Language',
+          launchAtLogin: 'Launch at Login',
+          authFiles: 'Auth Files',
+          openFolder: 'Open Folder',
+          localProxy: 'Local Proxy',
+          services: 'Services',
+          cancel: 'Cancel',
+          continue: 'Continue',
+          ok: 'OK',
+          delete: 'Delete',
+          footerLine1: `VibeProxy v${appVersion} is powered by <a href="https://github.com/router-for-me/CLIProxyAPIPlus" target="_blank">CLIProxyAPIPlus</a> | MIT License`,
+          footerLine2: '© 2026 <a href="https://automaze.io" target="_blank">Automaze, Ltd.</a> All rights reserved.',
+          footerLine3: '<a href="https://github.com/automazeio/vibeproxy/issues" target="_blank">Report an issue</a>'
+        },
+        common: {
+          unknown: 'Unknown',
+          success: 'Success',
+          error: 'Error',
+          save: 'Save',
+          set: 'Set',
+          edit: 'Edit',
+          clear: 'Clear',
+          running: 'Running',
+          stopped: 'Stopped',
+          disabled: 'Disabled',
+          yes: 'Yes',
+          no: 'No',
+          available: 'Available',
+          blocked: 'Blocked',
+          refresh: 'Refresh',
+          confirm: 'Confirm'
+        },
+        services: {
+          addAccount: 'Add Account',
+          connectedAccounts: ({ count }) => `${count} connected account${count === 1 ? '' : 's'}`,
+          activeAccount: ({ email }) => `Active: ${email}`,
+          selectCodexHint: 'Select one account to stop round-robin',
+          roundRobin: 'Round-robin with auto-failover',
+          inUse: 'In Use',
+          using: 'Using',
+          use: 'Use',
+          switching: 'Switching...',
+          remove: 'Remove',
+          noAccounts: 'No connected accounts',
+          expired: 'expired'
+        },
+        proxy: {
+          notSet: 'Not set',
+          title: 'Local Proxy',
+          description: 'Enter a local proxy URL, for example http://127.0.0.1:7890 or socks5://127.0.0.1:1080',
+          saveFailedTitle: 'Proxy Failed',
+          saveFailedMessage: 'Failed to save local proxy.',
+          savedTitle: 'Proxy Saved',
+          savedWithProxy: ({ proxyUrl }) => `Local proxy saved:\n\n${proxyUrl}\n\nServer requests will now use this proxy.`,
+          savedWithoutProxy: 'Local proxy cleared. Requests will now use direct or system proxy settings.',
+          clearedTitle: 'Proxy Cleared',
+          clearedMessage: 'Local proxy has been cleared.'
+        },
+        codex: {
+          selectFailed: 'Selection Failed',
+          selectFailedMessage: 'Failed to switch Codex account.',
+          authTitle: 'Codex Authentication',
+          authPrompt: ({ path }) => `Choose authentication method:\n\n• Web Authentication\n• Import from local Codex login (${path})`,
+          webAuth: 'Web Auth',
+          importLocal: 'Import from Local',
+          importSuccess: 'Import Successful',
+          importFailed: 'Import Failed',
+          importMessage: ({ action, email, selected }) => `Codex account ${action} from local login.\n\nAccount: ${email}${selected ? '\n\nThis account is now the active Codex account.' : ''}`,
+          importActionUpdated: 'updated',
+          importActionImported: 'imported'
+        },
+        kiro: {
+          serverNotRunningTitle: 'Server Not Running',
+          serverNotRunningMessage: 'Please start the server first to authenticate with Kiro.',
+          authTitle: 'Kiro Authentication',
+          authPrompt: 'Choose authentication method:\n\n• Web Authentication (Google OAuth / AWS Builder ID)\n• Import from Kiro IDE\n• Sync existing token from IDE',
+          authPromptImportOnly: 'Choose authentication method:\n\n• Web Authentication (Google OAuth / AWS Builder ID)\n• Import from Kiro IDE',
+          authOpened: 'Browser opened for Kiro authentication.\n\nYou can:\n• Login with Google OAuth\n• Login with AWS Builder ID\n\nThe app will automatically detect your credentials.',
+          syncFailed: 'Sync Failed',
+          importFailed: 'Import Failed',
+          syncSuccess: ({ count }) => `Synced ${count} Kiro token(s) from IDE.\n\nTokens have been updated with the latest credentials.`,
+          importSuccess: 'Kiro token imported from Kiro IDE successfully.',
+          syncFromIde: 'Sync from IDE',
+          importFromIde: 'Import from IDE'
+        },
+        auth: {
+          started: 'Authentication Started',
+          failed: 'Authentication Failed',
+          failedMessage: ({ details }) => `Please check if the browser opened and try again.\n\nDetails: ${details}`,
+          genericBrowserOpened: 'Browser opened for authentication.',
+          antigravity: 'Browser opened for Antigravity authentication.\n\nPlease complete the login in your browser.\n\nThe app will automatically detect your credentials.',
+          claude: 'Browser opened for Claude Code authentication.\n\nPlease complete the login in your browser.\n\nThe app will automatically detect your credentials.',
+          codex: 'Browser opened for Codex authentication.\n\nPlease complete the login in your browser.\n\nThe app will automatically detect your credentials.',
+          gemini: 'Browser opened for Gemini authentication.\n\nPlease complete the login in your browser.\n\nIf you have multiple projects, the default project will be used.',
+          githubCopilot: 'GitHub Copilot authentication started.\n\nPlease visit github.com/login/device and enter the code shown.\n\nThe app will automatically detect your credentials.',
+          qwen: 'Browser opened for Qwen authentication.\n\nPlease complete the login in your browser.'
+        },
+        qwen: {
+          title: 'Qwen Account Email',
+          description: 'Enter your Qwen account email address',
+          placeholder: 'your.email@example.com'
+        },
+        zai: {
+          title: 'Z.AI API Key',
+          description: 'Enter your Z.AI API key from z.ai/manage-apikey/apikey-list',
+          addKey: 'Add Key',
+          success: 'Z.AI API key added successfully.\n\nYou can now use GLM models through the proxy.'
+        },
+        remove: {
+          title: 'Remove Account',
+          confirm: ({ email, serviceName }) => `Are you sure you want to remove ${email} from ${serviceName}?`,
+          removedTitle: 'Removed',
+          removedMessage: ({ email }) => `Removed ${email}`,
+          failed: 'Failed to remove account'
+        },
+        usage: {
+          query: 'Query Usage',
+          refresh: 'Refresh Usage',
+          querying: 'Querying current usage...',
+          failed: 'Failed to query usage.',
+          overview: 'Codex Usage Overview',
+          expand: 'Expand',
+          collapse: 'Collapse',
+          updatedAt: 'Updated',
+          plan: 'Plan',
+          status: 'Status',
+          limitReached: 'Limit Reached',
+          used: 'Used',
+          remaining: 'Remaining',
+          cycle: 'Cycle',
+          resetAt: 'Resets',
+          timeLeft: 'Time Left',
+          periodStart: 'Period Start',
+          windowLength: 'Window Length',
+          codeReview: 'Code Review',
+          codeReviewStatus: 'Code Review Status',
+          reviewUsed: 'Review Used',
+          reviewResetAt: 'Review Resets',
+          window5h: '5H Window',
+          window5hRemaining: '5H Left',
+          windowWeek: 'Weekly Window',
+          windowWeekRemaining: 'Week Left',
+          primaryWindow: 'Primary Window',
+          secondaryWindow: 'Secondary Window',
+          subtitleFallback: 'Expand to view detailed quota data',
+          subtitleUpdated: ({ value }) => `Last queried: ${value}`,
+          noData: 'No displayable usage data was returned.'
+        }
+      }
+    };
+
     let authenticating = null;
+    let switchingCodexAccount = null;
     let expanded = new Set();
+    let expandedUsage = new Set();
     let modalCallback = null;
     let confirmCallback = null;
     let confirmCancelCallback = null;
-    
-    // Initialize
-    document.getElementById('version').textContent = vp.getVersion();
-    updateUI();
-    updateLaunchAtLogin();
-    setInterval(updateUI, 3000);
-    
-    // Watch auth directory
+    let currentLanguage = loadLanguagePreference();
+    const usageStates = {};
+    const codexLocalAuthPath = vp.getCodexLocalAuthPath ? vp.getCodexLocalAuthPath() : '~/.codex/auth.json';
+
     const fs = require('fs');
     const path = require('path');
     const os = require('os');
     const authDir = path.join(os.homedir(), '.cli-proxy-api');
+
+    applyLanguage();
+    updateUI();
+    updateLaunchAtLogin();
+    setInterval(updateUI, 3000);
+
     try {
       if (!fs.existsSync(authDir)) fs.mkdirSync(authDir, { recursive: true });
       fs.watch(authDir, { persistent: false }, () => setTimeout(renderServices, 500));
     } catch (e) {}
 
+    function resolveTranslation(obj, parts) {
+      return parts.reduce((value, key) => (value && value[key] != null ? value[key] : null), obj);
+    }
+
+    function t(key, params = {}) {
+      const parts = key.split('.');
+      const entry = resolveTranslation(TRANSLATIONS[currentLanguage], parts)
+        ?? resolveTranslation(TRANSLATIONS.zh, parts)
+        ?? key;
+      if (typeof entry === 'function') {
+        return entry(params);
+      }
+      return String(entry).replace(/\{(\w+)\}/g, (_, token) => params[token] ?? '');
+    }
+
+    function loadLanguagePreference() {
+      try {
+        const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+        if (saved === 'zh' || saved === 'en') return saved;
+      } catch (e) {}
+      const systemLanguage = (navigator.language || '').toLowerCase();
+      return systemLanguage.startsWith('zh') ? 'zh' : 'en';
+    }
+
+    function getLocale() {
+      return currentLanguage === 'zh' ? 'zh-CN' : 'en-US';
+    }
+
+    function setLanguage(language) {
+      if (language !== 'zh' && language !== 'en') return;
+      currentLanguage = language;
+      try {
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+      } catch (e) {}
+      applyLanguage();
+      updateUI();
+    }
+
+    function applyLanguage() {
+      document.documentElement.lang = currentLanguage === 'zh' ? 'zh-CN' : 'en';
+      document.title = t('static.title');
+      document.getElementById('serverStatusLabel').textContent = t('static.serverStatus');
+      document.getElementById('languageLabel').textContent = t('static.language');
+      document.getElementById('launchAtLoginLabel').textContent = t('static.launchAtLogin');
+      document.getElementById('authFilesLabel').textContent = t('static.authFiles');
+      document.getElementById('openAuthFolderBtn').textContent = t('static.openFolder');
+      document.getElementById('localProxyLabel').textContent = t('static.localProxy');
+      document.getElementById('servicesHeader').textContent = t('static.services');
+      document.getElementById('modalCancelBtn').textContent = t('static.cancel');
+      document.getElementById('modalSubmitBtn').textContent = t('static.continue');
+      document.getElementById('alertOkBtn').textContent = t('static.ok');
+      document.getElementById('confirmCancelBtn').textContent = t('static.cancel');
+      document.getElementById('confirmBtn').textContent = t('static.delete');
+      document.getElementById('footerLine1').innerHTML = t('static.footerLine1');
+      document.getElementById('footerLine2').innerHTML = t('static.footerLine2');
+      document.getElementById('footerLine3').innerHTML = t('static.footerLine3');
+      document.getElementById('languageZhBtn').classList.toggle('active', currentLanguage === 'zh');
+      document.getElementById('languageEnBtn').classList.toggle('active', currentLanguage === 'en');
+    }
+
     function updateUI() {
       updateServerStatus();
+      updateProxyUI();
       renderServices();
     }
-    
+
     function updateLaunchAtLogin() {
       const enabled = vp.getLaunchAtLogin();
       const toggle = document.getElementById('launchToggle');
-      if (enabled) {
-        toggle.classList.add('on');
-      } else {
-        toggle.classList.remove('on');
-      }
+      toggle.classList.toggle('on', enabled);
     }
-    
+
+    function updateProxyUI() {
+      const proxy = vp.getLocalProxyUrl ? vp.getLocalProxyUrl() : '';
+      document.getElementById('proxyValue').textContent = proxy || t('proxy.notSet');
+      document.getElementById('proxyBtn').textContent = proxy ? t('common.edit') : t('common.set');
+      document.getElementById('clearProxyBtn').textContent = t('common.clear');
+      document.getElementById('clearProxyBtn').classList.toggle('hidden', !proxy);
+    }
+
     function toggleLaunchAtLogin() {
       const current = vp.getLaunchAtLogin();
       vp.setLaunchAtLogin(!current);
       updateLaunchAtLogin();
     }
-    
+
+    function configureProxy() {
+      const current = vp.getLocalProxyUrl ? vp.getLocalProxyUrl() : '';
+      showModal(
+        t('proxy.title'),
+        t('proxy.description'),
+        current || 'http://127.0.0.1:7890',
+        'text',
+        t('common.save'),
+        async (value) => {
+          const result = await vp.setLocalProxyUrl(value || '');
+          if (!result.success) {
+            showAlert(t('proxy.saveFailedTitle'), result.error || t('proxy.saveFailedMessage'));
+            return;
+          }
+
+          if (vp.isServerRunning()) {
+            await vp.stopServer();
+            await vp.startServer();
+          }
+
+          updateProxyUI();
+          showAlert(
+            t('proxy.savedTitle'),
+            result.proxyUrl ? t('proxy.savedWithProxy', { proxyUrl: result.proxyUrl }) : t('proxy.savedWithoutProxy')
+          );
+        }
+      );
+    }
+
+    async function clearProxy() {
+      const result = await vp.setLocalProxyUrl('');
+      if (!result.success) {
+        showAlert(t('proxy.saveFailedTitle'), result.error || t('proxy.saveFailedMessage'));
+        return;
+      }
+
+      if (vp.isServerRunning()) {
+        await vp.stopServer();
+        await vp.startServer();
+      }
+
+      updateProxyUI();
+      showAlert(t('proxy.clearedTitle'), t('proxy.clearedMessage'));
+    }
+
     function updateServerStatus() {
       const running = vp.isServerRunning();
-      document.getElementById('serverDot').className = 'dot ' + (running ? 'green' : 'red');
-      document.getElementById('serverStatus').textContent = running ? 'Running' : 'Stopped';
+      document.getElementById('serverDot').className = `dot ${running ? 'green' : 'red'}`;
+      document.getElementById('serverStatus').textContent = running ? t('common.running') : t('common.stopped');
     }
-    
+
     async function toggleServer() {
       if (vp.isServerRunning()) {
         await vp.stopServer();
@@ -357,72 +931,94 @@
       }
       setTimeout(updateServerStatus, 500);
     }
-    
+
     function renderServices() {
       const accounts = vp.getAuthAccounts();
       const container = document.getElementById('services');
       container.innerHTML = '';
-      
+
       for (const svc of SERVICES) {
-        const svcAccounts = accounts.filter(a => a.type === svc.type);
+        const svcAccounts = accounts.filter((account) => account.type === svc.type);
         const enabled = vp.isProviderEnabled(svc.type);
         const isAuth = authenticating === svc.type;
-        const isExp = expanded.has(svc.type);
-        
-        // Auto-expand if has expired accounts
-        if (svcAccounts.some(a => a.expired) && !expanded.has(svc.type)) {
+        const isExpanded = expanded.has(svc.type);
+
+        if (svcAccounts.some((account) => account.expired) && !expanded.has(svc.type)) {
           expanded.add(svc.type);
         }
-        
+
         let html = `<div class="service-row">
           <div class="service-header">
             <div class="toggle ${enabled ? 'on' : ''}" onclick="toggleProvider('${svc.type}')"></div>
             <img class="service-icon ${enabled ? '' : 'disabled'}" src="../assets/${svc.icon}" onerror="this.style.display='none'">
             <span class="service-name ${enabled ? '' : 'disabled'}">${svc.name}</span>
-            ${!enabled ? '<span class="badge">(disabled)</span>' : ''}
-            ${isAuth ? '<div class="spinner"></div>' : (enabled ? `<button onclick="connect('${svc.type}')">Add Account</button>` : '')}
+            ${!enabled ? `<span class="badge">(${t('common.disabled')})</span>` : ''}
+            ${isAuth ? '<div class="spinner"></div>' : (enabled ? `<button onclick="connect('${svc.type}')">${t('services.addAccount')}</button>` : '')}
           </div>`;
-        
+
         if (enabled) {
           if (svcAccounts.length > 0) {
-            const countText = `${svcAccounts.length} connected account${svcAccounts.length > 1 ? 's' : ''}`;
-            const meta = svcAccounts.length > 1 ? '<span class="meta">• Round-robin w/ auto-failover</span>' : '';
+            let meta = '';
+            if (svc.type === 'codex' && svcAccounts.length > 1) {
+              const activeAccount = svcAccounts.find((account) => account.selected);
+              meta = activeAccount
+                ? `<span class="meta">• ${escapeHtml(t('services.activeAccount', { email: activeAccount.email }))}</span>`
+                : `<span class="meta">• ${escapeHtml(t('services.selectCodexHint'))}</span>`;
+            } else if (svcAccounts.length > 1) {
+              meta = `<span class="meta">• ${escapeHtml(t('services.roundRobin'))}</span>`;
+            }
+
             html += `
               <div class="accounts-summary" onclick="toggleExpand('${svc.type}')">
-                <span>${countText}</span>
+                <span>${escapeHtml(t('services.connectedAccounts', { count: svcAccounts.length }))}</span>
                 ${meta}
-                <span class="chevron ${isExp ? 'expanded' : ''}">▶</span>
+                <span class="chevron ${isExpanded ? 'expanded' : ''}">▶</span>
               </div>
-              <div class="accounts-list ${isExp ? 'show' : ''}">`;
-            
-            for (const acc of svcAccounts) {
-              const expiredClass = acc.expired ? 'expired' : '';
-              const expiredText = acc.expired ? ' (expired)' : '';
-              const safeId = acc.id.replace(/['"]/g, '');
+              <div class="accounts-list ${isExpanded ? 'show' : ''}">`;
+
+            for (const account of svcAccounts) {
+              const safeId = sanitizeForAttribute(account.id);
+              const isCodex = svc.type === 'codex';
+              const canSwitch = isCodex && svcAccounts.length > 1;
+              const isSwitching = switchingCodexAccount === account.id;
+              const usageState = usageStates[account.id];
+              const expiredSuffix = account.expired ? ` (${t('services.expired')})` : '';
               html += `
                 <div class="account-item">
-                  <span class="dot ${acc.expired ? 'orange' : 'green'}"></span>
-                  <span class="account-email ${expiredClass}">${escapeHtml(acc.email)}${expiredText}</span>
-                  <button class="danger" onclick="removeAccountById('${safeId}')">Remove</button>
+                  <div class="account-line">
+                    <span class="dot ${account.expired ? 'orange' : (account.selected ? 'green' : 'gray')}"></span>
+                    <span class="account-email ${account.expired ? 'expired' : ''}">${escapeHtml(account.email)}${escapeHtml(expiredSuffix)}</span>
+                    ${account.selected ? `<span class="account-status">${t('services.inUse')}</span>` : ''}
+                  </div>
+                  <div class="account-actions">
+                    ${canSwitch ? (account.selected
+                      ? `<button class="secondary" disabled>${t('services.using')}</button>`
+                      : `<button class="secondary" ${isSwitching ? 'disabled' : ''} onclick="selectCodexAccount('${safeId}')">${isSwitching ? t('services.switching') : t('services.use')}</button>`)
+                      : ''}
+                    ${isCodex ? `<button class="secondary" ${(usageState && usageState.loading) ? 'disabled' : ''} onclick="queryCodexUsage('${safeId}')">${usageState && usageState.usage ? t('usage.refresh') : t('usage.query')}</button>` : ''}
+                    <button class="danger" onclick="removeAccountById('${safeId}')">${t('services.remove')}</button>
+                  </div>
+                  ${isCodex ? renderUsageState(account.id) : ''}
                 </div>`;
             }
+
             html += '</div>';
           } else {
-            html += '<div class="no-accounts">No connected accounts</div>';
+            html += `<div class="no-accounts">${t('services.noAccounts')}</div>`;
           }
         }
-        
+
         html += '</div>';
         container.innerHTML += html;
       }
     }
-    
+
     function toggleProvider(type) {
       const current = vp.isProviderEnabled(type);
       vp.setProviderEnabled(type, !current);
       renderServices();
     }
-    
+
     function toggleExpand(type) {
       if (expanded.has(type)) {
         expanded.delete(type);
@@ -431,172 +1027,496 @@
       }
       renderServices();
     }
-    
-    async function connect(type) {
-      const svc = SERVICES.find(s => s.type === type);
-      
-      // Kiro uses web-based auth UI from CLIProxyAPIPlus management center
-      if (svc.webAuth) {
-        if (!vp.isServerRunning()) {
-          showAlert('Server Not Running', 'Please start the server first to authenticate with Kiro.');
+
+    function toggleUsageExpand(id) {
+      if (expandedUsage.has(id)) {
+        expandedUsage.delete(id);
+      } else {
+        expandedUsage.add(id);
+      }
+      renderServices();
+    }
+
+    async function selectCodexAccount(id) {
+      switchingCodexAccount = id;
+      renderServices();
+
+      try {
+        const result = vp.setSelectedCodexAccount(id);
+        if (!result || !result.success) {
+          showAlert(t('codex.selectFailed'), (result && result.error) || t('codex.selectFailedMessage'));
           return;
         }
-        
-        // Check if Kiro IDE token exists
+
+        if (vp.isServerRunning()) {
+          await vp.stopServer();
+          await vp.startServer();
+        }
+      } catch (e) {
+        showAlert(t('codex.selectFailed'), e.message);
+      } finally {
+        switchingCodexAccount = null;
+        renderServices();
+      }
+    }
+
+    async function queryCodexUsage(id) {
+      usageStates[id] = { loading: true };
+      renderServices();
+
+      try {
+        const result = await vp.getCodexUsage(id);
+        usageStates[id] = result.success
+          ? { loading: false, usage: result.usage }
+          : { loading: false, error: result.error || t('usage.failed'), details: result.details };
+        if (result.success) {
+          expandedUsage.add(id);
+        }
+      } catch (e) {
+        usageStates[id] = { loading: false, error: e.message || t('usage.failed') };
+      }
+
+      renderServices();
+    }
+
+    async function connect(type) {
+      const svc = SERVICES.find((service) => service.type === type);
+
+      if (svc.type === 'codex') {
+        const hasLocalCodexAuth = vp.checkCodexLocalAuth();
+        if (hasLocalCodexAuth) {
+          showConfirm(
+            t('codex.authTitle'),
+            t('codex.authPrompt', { path: codexLocalAuthPath }),
+            async () => {
+              await doAuth(type, svc.cmd);
+            },
+            async () => {
+              const result = vp.importCodexLocalAuth();
+              if (result.success) {
+                const account = result.account || {};
+                renderServices();
+
+                if (vp.isServerRunning()) {
+                  await vp.stopServer();
+                  await vp.startServer();
+                }
+
+                showAlert(
+                  t('codex.importSuccess'),
+                  t('codex.importMessage', {
+                    action: account.updated ? t('codex.importActionUpdated') : t('codex.importActionImported'),
+                    email: account.email || t('common.unknown'),
+                    selected: account.selected
+                  })
+                );
+              } else {
+                showAlert(t('codex.importFailed'), result.error || t('codex.importFailed'));
+              }
+            },
+            t('codex.webAuth'),
+            t('codex.importLocal')
+          );
+          return;
+        }
+      }
+
+      if (svc.webAuth) {
+        if (!vp.isServerRunning()) {
+          showAlert(t('kiro.serverNotRunningTitle'), t('kiro.serverNotRunningMessage'));
+          return;
+        }
+
         const hasKiroToken = vp.checkKiroToken();
         const accounts = vp.getAuthAccounts();
-        const hasImportedToken = accounts.some(a => a.type === 'kiro');
-        
+        const hasImportedToken = accounts.some((account) => account.type === 'kiro');
+
         if (hasKiroToken) {
-          // Show choice: Web Auth, Import, or Sync
           showConfirm(
-            'Kiro Authentication',
-            'Choose authentication method:\n\n• Web Authentication (Google OAuth / AWS Builder ID)\n• Import from Kiro IDE (detected)\n• Sync existing token from IDE',
+            t('kiro.authTitle'),
+            hasImportedToken ? t('kiro.authPrompt') : t('kiro.authPromptImportOnly'),
             () => {
-              // Web auth
               shell.openExternal(`http://localhost:${vp.getPort()}/v0/oauth/kiro`);
-              showAlert('Kiro Authentication', '🌐 Browser opened for Kiro authentication.\n\nYou can:\n• Login with Google OAuth\n• Login with AWS Builder ID\n\nThe app will automatically detect your credentials.');
+              showAlert(t('kiro.authTitle'), t('kiro.authOpened'));
             },
             () => {
               if (hasImportedToken) {
-                // Sync existing token
                 const result = vp.syncKiroTokenFromIDE();
                 if (result.success) {
-                  showAlert('Success', `✓ Synced ${result.updated} Kiro token(s) from IDE!\n\nTokens have been updated with the latest credentials.`);
+                  showAlert(t('common.success'), t('kiro.syncSuccess', { count: result.updated }));
                   renderServices();
                 } else {
-                  showAlert('Sync Failed', result.error || 'Failed to sync Kiro token.');
+                  showAlert(t('kiro.syncFailed'), result.error || t('kiro.syncFailed'));
                 }
               } else {
-                // Import new token
                 const result = vp.importKiroToken();
                 if (result.success) {
-                  showAlert('Success', '✓ Kiro token imported from Kiro IDE successfully!');
+                  showAlert(t('common.success'), t('kiro.importSuccess'));
                   renderServices();
                 } else {
-                  showAlert('Import Failed', result.error || 'Failed to import Kiro token.');
+                  showAlert(t('kiro.importFailed'), result.error || t('kiro.importFailed'));
                 }
               }
             },
-            'Web Auth',
-            hasImportedToken ? 'Sync from IDE' : 'Import from IDE'
+            t('codex.webAuth'),
+            hasImportedToken ? t('kiro.syncFromIde') : t('kiro.importFromIde')
           );
         } else {
-          // No Kiro token found, only show web auth
           shell.openExternal(`http://localhost:${vp.getPort()}/v0/oauth/kiro`);
-          showAlert('Kiro Authentication', '🌐 Browser opened for Kiro authentication.\n\nYou can:\n• Login with Google OAuth\n• Login with AWS Builder ID\n\nThe app will automatically detect your credentials.');
+          showAlert(t('kiro.authTitle'), t('kiro.authOpened'));
         }
         return;
       }
-      
+
       if (svc.needsEmail) {
-        showModal('Qwen Account Email', 'Enter your Qwen account email address', 'your.email@example.com', 'email', 'Continue', async (email) => {
+        showModal(t('qwen.title'), t('qwen.description'), t('qwen.placeholder'), 'email', t('static.continue'), async (email) => {
           if (email) await doAuth(type, svc.cmd, email);
         });
         return;
       }
-      
+
       if (svc.needsApiKey) {
-        showModal('Z.AI API Key', 'Enter your Z.AI API key from z.ai/manage-apikey/apikey-list', '', 'password', 'Add Key', (key) => {
+        showModal(t('zai.title'), t('zai.description'), '', 'password', t('zai.addKey'), (key) => {
           if (key) {
             vp.saveZaiApiKey(key);
-            showAlert('Success', '✓ Z.AI API key added successfully.\n\nYou can now use GLM models through the proxy.');
+            showAlert(t('common.success'), t('zai.success'));
             renderServices();
           }
         });
         return;
       }
-      
+
       await doAuth(type, svc.cmd);
     }
-    
+
     async function doAuth(type, cmd, email = null) {
       authenticating = type;
       renderServices();
-      
+
       try {
         const result = await vp.runAuthCommand(cmd, email);
         authenticating = null;
         renderServices();
-        
+
         if (result.success) {
-          showAlert('Authentication Started', getSuccessMsg(type, result.output));
+          showAlert(t('auth.started'), getSuccessMsg(type, result.output || ''));
         } else {
-          showAlert('Authentication Failed', `Please check if the browser opened and try again.\n\nDetails: ${result.output || 'No output'}`);
+          showAlert(t('auth.failed'), t('auth.failedMessage', { details: result.output || t('common.unknown') }));
         }
       } catch (e) {
         authenticating = null;
         renderServices();
-        showAlert('Error', e.message);
+        showAlert(t('common.error'), e.message);
       }
     }
-    
+
     function getSuccessMsg(type, output) {
       if (type === 'github-copilot' && output.includes('Code copied')) {
         return output;
       }
-      const msgs = {
-        'antigravity': '🌐 Browser opened for Antigravity authentication.\n\nPlease complete the login in your browser.\n\nThe app will automatically detect your credentials.',
-        'claude': '🌐 Browser opened for Claude Code authentication.\n\nPlease complete the login in your browser.\n\nThe app will automatically detect your credentials.',
-        'codex': '🌐 Browser opened for Codex authentication.\n\nPlease complete the login in your browser.\n\nThe app will automatically detect your credentials.',
-        'gemini': '🌐 Browser opened for Gemini authentication.\n\nPlease complete the login in your browser.\n\n⚠️ Note: If you have multiple projects, the default project will be used.',
-        'github-copilot': '🌐 GitHub Copilot authentication started!\n\nPlease visit github.com/login/device and enter the code shown.\n\nThe app will automatically detect your credentials.',
-        'qwen': '🌐 Browser opened for Qwen authentication.\n\nPlease complete the login in your browser.'
+
+      const messages = {
+        antigravity: t('auth.antigravity'),
+        claude: t('auth.claude'),
+        codex: t('auth.codex'),
+        gemini: t('auth.gemini'),
+        'github-copilot': t('auth.githubCopilot'),
+        qwen: t('auth.qwen')
       };
-      return msgs[type] || 'Browser opened for authentication.';
+      return messages[type] || t('auth.genericBrowserOpened');
     }
-    
-    function escapeHtml(str) {
-      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
     }
-    
-    function removeAccountById(id) {
-      const accounts = vp.getAuthAccounts();
-      const acc = accounts.find(a => a.id === id);
-      if (!acc) return;
-      
-      const svc = SERVICES.find(s => s.type === acc.type);
-      const serviceName = svc ? svc.name : acc.type;
-      
-      showConfirm('Remove Account', `Are you sure you want to remove ${acc.email} from ${serviceName}?`, () => {
-        const wasRunning = vp.isServerRunning();
-        
-        if (vp.deleteAccount(acc.path)) {
-          showAlert('Removed', `✓ Removed ${acc.email}`);
-          
-          if (wasRunning) {
-            vp.stopServer().then(() => {
-              setTimeout(() => vp.startServer(), 300);
-            });
-          }
-        } else {
-          showAlert('Error', 'Failed to remove account');
-        }
-        renderServices();
-      }, null, 'Remove', 'Cancel');
+
+    function sanitizeForAttribute(value) {
+      return String(value ?? '').replace(/['"]/g, '');
     }
-    
-    function removeAccount(filePath, email, serviceName) {
-      showConfirm('Remove Account', `Are you sure you want to remove ${email} from ${serviceName}?`, () => {
-        const wasRunning = vp.isServerRunning();
-        
-        if (vp.deleteAccount(filePath)) {
-          showAlert('Removed', `✓ Removed ${email}`);
-          
-          // Restart server if was running (like Swift version)
-          if (wasRunning) {
-            vp.stopServer().then(() => {
-              setTimeout(() => vp.startServer(), 300);
-            });
-          }
-        } else {
-          showAlert('Error', 'Failed to remove account');
-        }
-        renderServices();
+
+    function formatUsageNumber(value) {
+      if (typeof value !== 'number' || !Number.isFinite(value)) {
+        return t('common.unknown');
+      }
+      return value.toLocaleString(getLocale(), {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: Number.isInteger(value) ? 0 : 2
       });
     }
-    
-    // Modal functions
+
+    function formatDateText(value) {
+      if (!value) return t('common.unknown');
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return String(value);
+      return date.toLocaleString(getLocale());
+    }
+
+    function formatUsageDate(value) {
+      return escapeHtml(formatDateText(value));
+    }
+
+    function formatDurationSeconds(value) {
+      if (typeof value !== 'number' || !Number.isFinite(value)) {
+        return t('common.unknown');
+      }
+
+      const totalMinutes = Math.max(0, Math.floor(value / 60));
+      const weeks = Math.floor(totalMinutes / (60 * 24 * 7));
+      const days = Math.floor((totalMinutes % (60 * 24 * 7)) / (60 * 24));
+      const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+      const minutes = totalMinutes % 60;
+
+      if (currentLanguage === 'zh') {
+        if (weeks > 0) return `${weeks}周${days > 0 ? ` ${days}天` : ''}`;
+        if (days > 0) return `${days}天${hours > 0 ? ` ${hours}小时` : ''}`;
+        if (hours > 0) return `${hours}小时${minutes > 0 ? ` ${minutes}分钟` : ''}`;
+        return `${minutes}分钟`;
+      }
+
+      if (weeks > 0) return `${weeks}w${days > 0 ? ` ${days}d` : ''}`;
+      if (days > 0) return `${days}d${hours > 0 ? ` ${hours}h` : ''}`;
+      if (hours > 0) return `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`;
+      return `${minutes}m`;
+    }
+
+    function getWindowKind(window, fallback) {
+      const seconds = window && window.limitWindowSeconds;
+      if (typeof seconds === 'number' && Number.isFinite(seconds)) {
+        if (Math.abs(seconds - 18000) <= 1800) return '5h';
+        if (Math.abs(seconds - 604800) <= 43200) return 'week';
+      }
+      return fallback;
+    }
+
+    function getWindowTitle(window, fallback) {
+      const kind = getWindowKind(window, fallback);
+      if (kind === '5h') return t('usage.window5h');
+      if (kind === 'week') return t('usage.windowWeek');
+      return kind === 'secondary' ? t('usage.secondaryWindow') : t('usage.primaryWindow');
+    }
+
+    function getWindowRemainingLabel(window, fallback) {
+      const kind = getWindowKind(window, fallback);
+      if (kind === '5h') return t('usage.window5hRemaining');
+      if (kind === 'week') return t('usage.windowWeekRemaining');
+      return `${getWindowTitle(window, fallback)} ${t('usage.remaining')}`;
+    }
+
+    function getUsageVariant(remainingPercent) {
+      if (typeof remainingPercent !== 'number' || !Number.isFinite(remainingPercent)) {
+        return '';
+      }
+      if (remainingPercent <= 15) return 'bad';
+      if (remainingPercent <= 40) return 'warn';
+      return 'good';
+    }
+
+    function renderUsagePill(label, value, variant = '') {
+      return `<div class="usage-pill ${variant}"><span class="usage-pill-label">${escapeHtml(label)}</span><span class="usage-pill-value">${escapeHtml(value)}</span></div>`;
+    }
+
+    function renderUsageRow(label, value) {
+      return `<div class="usage-row"><span class="usage-label">${escapeHtml(label)}</span><span class="usage-value">${value}</span></div>`;
+    }
+
+    function renderUsageWindowSection(window, fallback) {
+      if (!window) return '';
+
+      const rows = [];
+      if (window.remainingPercent != null) {
+        rows.push(renderUsageRow(t('usage.remaining'), `${formatUsageNumber(window.remainingPercent)}%`));
+      }
+      if (window.usedPercent != null) {
+        rows.push(renderUsageRow(t('usage.used'), `${formatUsageNumber(window.usedPercent)}%`));
+      }
+      if (window.resetAt) {
+        rows.push(renderUsageRow(t('usage.resetAt'), formatUsageDate(window.resetAt)));
+      }
+      if (window.resetAfterSeconds != null) {
+        rows.push(renderUsageRow(t('usage.timeLeft'), escapeHtml(formatDurationSeconds(window.resetAfterSeconds))));
+      }
+      if (window.limitWindowSeconds != null) {
+        rows.push(renderUsageRow(t('usage.windowLength'), escapeHtml(formatDurationSeconds(window.limitWindowSeconds))));
+      }
+
+      if (rows.length === 0) return '';
+      return `<div class="usage-section"><div class="usage-section-title">${escapeHtml(getWindowTitle(window, fallback))}</div><div class="usage-grid">${rows.join('')}</div></div>`;
+    }
+
+    function renderUsageState(accountId) {
+      const state = usageStates[accountId];
+      if (!state) return '';
+
+      if (state.loading) {
+        return `<div class="usage-card"><div class="usage-note">${t('usage.querying')}</div></div>`;
+      }
+
+      if (state.error) {
+        const detail = state.details ? `\n${escapeHtml(state.details)}` : '';
+        return `<div class="usage-card"><div class="usage-note usage-error">${escapeHtml(state.error)}${detail}</div></div>`;
+      }
+
+      const usage = state.usage || {};
+      const rateLimit = usage.rateLimit;
+      const reviewLimit = usage.codeReviewRateLimit;
+      const primaryWindow = rateLimit && rateLimit.primaryWindow;
+      const secondaryWindow = rateLimit && rateLimit.secondaryWindow;
+      const reviewWindow = reviewLimit && reviewLimit.primaryWindow;
+      const summaryPills = [];
+      const detailSections = [];
+      const overallRows = [];
+      const safeId = sanitizeForAttribute(accountId);
+      const isExpanded = expandedUsage.has(accountId);
+
+      if (usage.planType) {
+        summaryPills.push(renderUsagePill(t('usage.plan'), usage.planType));
+        overallRows.push(renderUsageRow(t('usage.plan'), escapeHtml(usage.planType)));
+      }
+
+      if (rateLimit) {
+        const statusLabel = rateLimit.allowed && !rateLimit.limitReached ? t('common.available') : t('common.blocked');
+        summaryPills.push(renderUsagePill(t('usage.status'), statusLabel, rateLimit.allowed && !rateLimit.limitReached ? 'good' : 'bad'));
+        overallRows.push(renderUsageRow(t('usage.status'), escapeHtml(statusLabel)));
+        overallRows.push(renderUsageRow(t('usage.limitReached'), escapeHtml(rateLimit.limitReached ? t('common.yes') : t('common.no'))));
+      }
+
+      if (primaryWindow && primaryWindow.remainingPercent != null) {
+        summaryPills.push(renderUsagePill(
+          getWindowRemainingLabel(primaryWindow, 'primary'),
+          `${formatUsageNumber(primaryWindow.remainingPercent)}%`,
+          getUsageVariant(primaryWindow.remainingPercent)
+        ));
+      }
+
+      if (secondaryWindow && secondaryWindow.remainingPercent != null) {
+        summaryPills.push(renderUsagePill(
+          getWindowRemainingLabel(secondaryWindow, 'secondary'),
+          `${formatUsageNumber(secondaryWindow.remainingPercent)}%`,
+          getUsageVariant(secondaryWindow.remainingPercent)
+        ));
+      }
+
+      if (!rateLimit && usage.remaining != null) {
+        summaryPills.push(renderUsagePill(t('usage.remaining'), formatUsageNumber(usage.remaining)));
+      }
+
+      if (usage.retrievedAt) {
+        overallRows.push(renderUsageRow(t('usage.updatedAt'), formatUsageDate(usage.retrievedAt)));
+      }
+
+      if (!rateLimit) {
+        if (usage.used != null || usage.limit != null) {
+          const value = usage.limit != null
+            ? `${formatUsageNumber(usage.used)} / ${formatUsageNumber(usage.limit)}`
+            : formatUsageNumber(usage.used);
+          overallRows.push(renderUsageRow(t('usage.used'), escapeHtml(value)));
+        }
+        if (usage.remaining != null) {
+          overallRows.push(renderUsageRow(t('usage.remaining'), escapeHtml(formatUsageNumber(usage.remaining))));
+        }
+        if (usage.cycle) {
+          overallRows.push(renderUsageRow(t('usage.cycle'), escapeHtml(String(usage.cycle))));
+        }
+        if (usage.periodEnd) {
+          overallRows.push(renderUsageRow(t('usage.resetAt'), formatUsageDate(usage.periodEnd)));
+        }
+        if (usage.periodStart) {
+          overallRows.push(renderUsageRow(t('usage.periodStart'), formatUsageDate(usage.periodStart)));
+        }
+      }
+
+      if (overallRows.length > 0) {
+        detailSections.push(`<div class="usage-section"><div class="usage-grid">${overallRows.join('')}</div></div>`);
+      }
+
+      const primarySection = renderUsageWindowSection(primaryWindow, 'primary');
+      const secondarySection = renderUsageWindowSection(secondaryWindow, 'secondary');
+      if (primarySection) detailSections.push(primarySection);
+      if (secondarySection) detailSections.push(secondarySection);
+
+      if (reviewLimit || reviewWindow) {
+        const reviewRows = [];
+        if (reviewLimit) {
+          const statusLabel = reviewLimit.allowed ? t('common.available') : t('common.blocked');
+          reviewRows.push(renderUsageRow(t('usage.codeReviewStatus'), escapeHtml(statusLabel)));
+        }
+        if (reviewWindow && reviewWindow.usedPercent != null) {
+          reviewRows.push(renderUsageRow(t('usage.reviewUsed'), `${formatUsageNumber(reviewWindow.usedPercent)}%`));
+        }
+        if (reviewWindow && reviewWindow.resetAt) {
+          reviewRows.push(renderUsageRow(t('usage.reviewResetAt'), formatUsageDate(reviewWindow.resetAt)));
+        }
+        if (reviewRows.length > 0) {
+          detailSections.push(`<div class="usage-section"><div class="usage-section-title">${escapeHtml(t('usage.codeReview'))}</div><div class="usage-grid">${reviewRows.join('')}</div></div>`);
+        }
+      }
+
+      if (detailSections.length === 0 && usage.raw) {
+        detailSections.push(`<div class="usage-note">${escapeHtml(JSON.stringify(usage.raw, null, 2).slice(0, 800) || t('usage.noData'))}</div>`);
+      }
+      if (detailSections.length === 0 && !usage.raw) {
+        detailSections.push(`<div class="usage-note">${t('usage.noData')}</div>`);
+      }
+
+      const subtitle = usage.retrievedAt
+        ? t('usage.subtitleUpdated', { value: formatDateText(usage.retrievedAt) })
+        : t('usage.subtitleFallback');
+      const promo = usage.promo && usage.promo.message
+        ? `<div class="usage-note">${escapeHtml(usage.promo.message)}</div>`
+        : '';
+
+      return `<div class="usage-card">
+        <button class="usage-header" type="button" onclick="toggleUsageExpand('${safeId}')">
+          <div class="usage-heading">
+            <span class="usage-title">${t('usage.overview')}</span>
+            <span class="usage-subtitle">${escapeHtml(subtitle)}</span>
+          </div>
+          <span class="usage-toggle"><span>${isExpanded ? t('usage.collapse') : t('usage.expand')}</span><span class="chevron ${isExpanded ? 'expanded' : ''}">▶</span></span>
+        </button>
+        ${summaryPills.length > 0 ? `<div class="usage-summary">${summaryPills.join('')}</div>` : ''}
+        ${isExpanded ? `<div class="usage-sections">${detailSections.join('')}${promo}</div>` : ''}
+      </div>`;
+    }
+
+    function removeAccountById(id) {
+      const accounts = vp.getAuthAccounts();
+      const account = accounts.find((item) => item.id === id);
+      if (!account) return;
+
+      const service = SERVICES.find((item) => item.type === account.type);
+      const serviceName = service ? service.name : account.type;
+
+      showConfirm(
+        t('remove.title'),
+        t('remove.confirm', { email: account.email, serviceName }),
+        () => {
+          const wasRunning = vp.isServerRunning();
+
+          if (vp.deleteAccount(account.path)) {
+            showAlert(t('remove.removedTitle'), t('remove.removedMessage', { email: account.email }));
+            delete usageStates[account.id];
+            expandedUsage.delete(account.id);
+
+            if (wasRunning) {
+              vp.stopServer().then(() => {
+                setTimeout(() => vp.startServer(), 300);
+              });
+            }
+          } else {
+            showAlert(t('common.error'), t('remove.failed'));
+          }
+          renderServices();
+        },
+        null,
+        t('services.remove'),
+        t('static.cancel')
+      );
+    }
+
     function showModal(title, desc, placeholder, inputType, btnText, callback) {
       document.getElementById('modalTitle').textContent = title;
       document.getElementById('modalDesc').textContent = desc;
@@ -608,83 +1528,77 @@
       document.getElementById('modalInput').focus();
       modalCallback = callback;
     }
-    
+
     function closeModal() {
       document.getElementById('inputModal').classList.add('hidden');
+      document.getElementById('modalSubmitBtn').textContent = t('static.continue');
       modalCallback = null;
     }
-    
+
     function submitModal() {
-      const val = document.getElementById('modalInput').value;
-      const cb = modalCallback;
+      const value = document.getElementById('modalInput').value;
+      const callback = modalCallback;
       closeModal();
-      if (cb) cb(val);
+      if (callback) callback(value);
     }
-    
-    function showAlert(title, msg) {
+
+    function showAlert(title, message) {
       document.getElementById('alertTitle').textContent = title;
-      document.getElementById('alertMsg').textContent = msg;
+      document.getElementById('alertMsg').textContent = message;
       document.getElementById('alertModal').classList.remove('hidden');
     }
-    
+
     function closeAlert() {
       document.getElementById('alertModal').classList.add('hidden');
     }
-    
-    function showConfirm(title, msg, callback, cancelCallback, confirmText, cancelText) {
+
+    function showConfirm(title, message, callback, cancelCallback, confirmText, cancelText) {
       document.getElementById('confirmTitle').textContent = title;
-      document.getElementById('confirmMsg').textContent = msg;
-      document.getElementById('confirmBtn').textContent = confirmText || 'Remove';
-      if (cancelText) {
-        const cancelBtn = document.querySelector('#confirmModal .secondary');
-        cancelBtn.textContent = cancelText;
-      }
+      document.getElementById('confirmMsg').textContent = message;
+      document.getElementById('confirmBtn').textContent = confirmText || t('services.remove');
+      document.getElementById('confirmCancelBtn').textContent = cancelText || t('static.cancel');
       document.getElementById('confirmModal').classList.remove('hidden');
       confirmCallback = callback;
       confirmCancelCallback = cancelCallback;
     }
-    
+
     function closeConfirm() {
       document.getElementById('confirmModal').classList.add('hidden');
+      document.getElementById('confirmBtn').textContent = t('static.delete');
+      document.getElementById('confirmCancelBtn').textContent = t('static.cancel');
       confirmCallback = null;
       confirmCancelCallback = null;
-      // Reset button text
-      document.getElementById('confirmBtn').textContent = 'Remove';
-      const cancelBtn = document.querySelector('#confirmModal .secondary');
-      cancelBtn.textContent = 'Cancel';
     }
-    
+
     function doConfirm() {
-      const cb = confirmCallback;
+      const callback = confirmCallback;
       closeConfirm();
-      if (cb) cb();
+      if (callback) callback();
     }
-    
+
     function doCancelConfirm() {
-      const cb = confirmCancelCallback;
+      const callback = confirmCancelCallback;
       closeConfirm();
-      if (cb) cb();
+      if (callback) callback();
     }
-    
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
         if (!document.getElementById('inputModal').classList.contains('hidden')) submitModal();
         else if (!document.getElementById('alertModal').classList.contains('hidden')) closeAlert();
         else if (!document.getElementById('confirmModal').classList.contains('hidden')) doConfirm();
       }
-      if (e.key === 'Escape') {
+      if (event.key === 'Escape') {
         closeModal();
         closeAlert();
         closeConfirm();
       }
     });
-    
-    // Open links in browser
-    document.addEventListener('click', (e) => {
-      if (e.target.tagName === 'A' && e.target.href.startsWith('http')) {
-        e.preventDefault();
-        shell.openExternal(e.target.href);
+
+    document.addEventListener('click', (event) => {
+      if (event.target.tagName === 'A' && event.target.href.startsWith('http')) {
+        event.preventDefault();
+        shell.openExternal(event.target.href);
       }
     });
   </script>
